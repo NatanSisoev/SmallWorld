@@ -24,10 +24,10 @@ install:
 	$(PYTHON) -m pip install -r requirements.txt
 
 docs:
-	$(PYTHON) -m pdoc src --output-directory docs/api --math
+	$(PYTHON) -m pdoc src.smallworld --output-directory docs/api --math
 
 docs-serve:
-	$(PYTHON) -m pdoc src --math
+	$(PYTHON) -m pdoc src.smallworld --math
 
 notebooks:
 	$(PYTHON) -c "import subprocess, sys; from pathlib import Path; [subprocess.check_call([sys.executable, '-m', 'jupyter', 'nbconvert', '--to', 'notebook', '--execute', '--inplace', str(nb)]) for nb in sorted(Path('notebooks').glob('*.ipynb'))]"

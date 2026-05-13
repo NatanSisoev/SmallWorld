@@ -60,7 +60,7 @@ the regular ring: a few shortcuts are enough to make diffusion fast.
 
 ```text
 SmallWorld/
-├── src/                          importable library
+├── src/smallworld/               importable library
 │   ├── networks.py               builders for the three networks
 │   ├── plotting.py               matplotlib + pyvis helpers
 │   └── ...
@@ -78,7 +78,7 @@ SmallWorld/
 
 The API reference (built by `make docs`) lives at
 [`api/index.html`](api/index.html) and is auto-generated from the
-docstrings in `src/`.
+docstrings in `src/smallworld/`.
 
 ## Getting started
 

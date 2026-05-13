@@ -2,10 +2,10 @@
 
 Two submodules are provided:
 
-* :mod:`src.networks` - builders for the three reference networks: a
-  regular ring lattice, an Erdős-Rényi random graph, and a
+* :mod:`src.smallworld.networks` - builders for the three reference
+  networks: a regular ring lattice, an Erdős-Rényi random graph, and a
   Watts-Strogatz small-world graph.
-* :mod:`src.plotting` - visualisation helpers, both static
+* :mod:`src.smallworld.plotting` - visualisation helpers, both static
   (matplotlib, used for the report figures) and interactive (pyvis,
   exported as standalone HTML pages).
 

@@ -20,7 +20,7 @@ and visualised interactively with [pyvis](https://pyvis.readthedocs.io/)
 SmallWorld/
 ├── README.md
 ├── requirements.txt
-├── src/                          # reusable library code
+├── src/smallworld/               # reusable library code
 │   ├── networks.py               # build_ring, build_er, build_ws
 │   ├── metrics.py                # L, C, β-sweep
 │   ├── walks.py                  # random walk, cover time, mixing time
@@ -45,7 +45,7 @@ Then open `docs/index.md` for the project overview, or run the
 notebooks in `notebooks/` in numerical order.
 
 Without `make`, the same commands work directly: `pip install -r
-requirements.txt`, `python -m pdoc src -o docs/api --math`.
+requirements.txt`, `python -m pdoc src.smallworld -o docs/api --math`.
 
 ## Authors
 
