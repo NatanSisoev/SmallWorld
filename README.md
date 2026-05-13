@@ -37,10 +37,15 @@ SmallWorld/
 ## Setup
 
 ```bash
-pip install -r requirements.txt
+make install     # installs dependencies from requirements.txt
+make docs        # builds API documentation into docs/api/
 ```
 
-Then run the notebooks in `notebooks/` in numerical order.
+Then open `docs/index.md` for the project overview, or run the
+notebooks in `notebooks/` in numerical order.
+
+Without `make`, the same commands work directly: `pip install -r
+requirements.txt`, `python -m pdoc src -o docs/api --math`.
 
 ## Authors
 
