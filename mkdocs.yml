@@ -1,5 +1,5 @@
 site_name: SmallWorld
-site_description: Watts-Strogatz small-world model — course project (MatCAD, UAB).
+site_description: Watts-Strogatz small-world model - course project (MatCAD, UAB).
 site_author: Lluís Gay, Sergi Prats, Ferran Villarta, Natan Sisoev
 
 docs_dir: docs
@@ -37,6 +37,7 @@ theme:
 nav:
   - Home: index.md
   - Theory: theory.md
+  - Interactive examples: examples.md
   - API Reference:
       - Networks: api/networks.md
       - Plotting: api/plotting.md

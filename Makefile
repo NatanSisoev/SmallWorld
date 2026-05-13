@@ -10,27 +10,31 @@
 PYTHON ?= python
 
 .DEFAULT_GOAL := help
-.PHONY: help install docs docs-serve notebooks clean
+.PHONY: help install docs docs-serve examples notebooks clean
 
 help:
 	@echo "Available targets:"
 	@echo "  install      Install Python dependencies from requirements.txt"
+	@echo "  examples     Regenerate the pyvis HTML examples in docs/examples/"
 	@echo "  docs         Build the static documentation site into site/"
 	@echo "  docs-serve   Start a live-reloading docs server on http://localhost:8000"
 	@echo "  notebooks    Execute every notebook in-place (reproducibility check)"
-	@echo "  clean        Remove __pycache__ and the built site"
+	@echo "  clean        Remove __pycache__, the built site, and generated examples"
 
 install:
 	$(PYTHON) -m pip install -r requirements.txt
 
-docs:
+examples:
+	$(PYTHON) scripts/build_examples.py
+
+docs: examples
 	$(PYTHON) -m mkdocs build --strict
 
-docs-serve:
+docs-serve: examples
 	$(PYTHON) -m mkdocs serve
 
 notebooks:
 	$(PYTHON) -c "import subprocess, sys; from pathlib import Path; [subprocess.check_call([sys.executable, '-m', 'jupyter', 'nbconvert', '--to', 'notebook', '--execute', '--inplace', str(nb)]) for nb in sorted(Path('notebooks').glob('*.ipynb'))]"
 
 clean:
-	$(PYTHON) -c "import shutil, pathlib; [shutil.rmtree(p, ignore_errors=True) for p in list(pathlib.Path('.').rglob('__pycache__')) + [pathlib.Path('site'), pathlib.Path('.ipynb_checkpoints')]]"
+	$(PYTHON) -c "import shutil, pathlib; [shutil.rmtree(p, ignore_errors=True) for p in list(pathlib.Path('.').rglob('__pycache__')) + [pathlib.Path('site'), pathlib.Path('docs/examples'), pathlib.Path('.ipynb_checkpoints')]]"

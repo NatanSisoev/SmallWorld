@@ -1,5 +1,11 @@
+# Claude Code project orientation
+CLAUDE.md
+
 # Figures
 figures/
+
+# Generated pyvis HTML embedded in the docs (rebuilt by `make examples`)
+docs/examples/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
