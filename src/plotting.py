@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 from matplotlib.figure import Figure
 
-__all__ = ["draw_networks_grid", "to_pyvis"]
+__all__ = ["draw_networks_grid", "to_pyvis", "save_pyvis"]
 
 
 _DEFAULT_LAYOUTS: dict[str, str] = {
@@ -152,6 +152,30 @@ def to_pyvis(
     if not physics:
         net.toggle_physics(False)
     return net
+
+
+def save_pyvis(net, path: str | Path) -> Path:
+    """Write a pyvis network to disk as UTF-8 HTML.
+
+    Works around a Windows-specific bug where :meth:`Network.save_graph`
+    opens the output file with the system encoding (``cp1252``) and
+    crashes on non-Latin-1 characters embedded in the bundled JavaScript.
+
+    Parameters
+    ----------
+    net : pyvis.network.Network
+        The network to serialise.
+    path : str or Path
+        Destination ``.html`` path.
+
+    Returns
+    -------
+    Path
+        The path the file was written to.
+    """
+    path = Path(path)
+    path.write_text(net.generate_html(), encoding="utf-8")
+    return path
 
 
 def _layout(
