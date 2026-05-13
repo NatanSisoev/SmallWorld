@@ -37,15 +37,16 @@ SmallWorld/
 ## Setup
 
 ```bash
-make install     # installs dependencies from requirements.txt
-make docs        # builds API documentation into docs/api/
+make install      # installs dependencies from requirements.txt
+make docs-serve   # live-reloading docs at http://localhost:8000
 ```
 
-Then open `docs/index.md` for the project overview, or run the
-notebooks in `notebooks/` in numerical order.
+Then open the docs in a browser, or run the notebooks in `notebooks/`
+in numerical order. To build a static site for distribution, run
+`make docs` — output goes to `site/`.
 
 Without `make`, the same commands work directly: `pip install -r
-requirements.txt`, `python -m pdoc src.smallworld -o docs/api --math`.
+requirements.txt`, `python -m mkdocs serve`.
 
 ## Authors
 

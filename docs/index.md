@@ -3,58 +3,32 @@
 Documentation for the **Modelització i Simulació** course project
 (MatCAD, UAB, 2025–2026).
 
-## What we study
-
 In 1967, Stanley Milgram observed that two random Americans are
 connected by a chain of about **six acquaintances**. Three decades
 later, Watts & Strogatz (*Nature*, 1998) showed that this is a
-generic feature of networks combining **high local clustering** with
-**a few random long-range shortcuts**. We reproduce their analysis
-on three reference networks.
+generic feature of networks that combine **high local clustering**
+with **a few random long-range shortcuts**. This project reproduces
+their analysis.
 
-## The three networks
+We build and study three reference networks at the same average
+degree $k$:
 
-All three are built on `N` nodes with average degree `k`:
+- a regular **ring lattice** — every node connected to its
+  $k/2$ nearest neighbours,
+- an **Erdős–Rényi** random graph — each edge sampled independently
+  with probability $p = k / (N-1)$,
+- a **Watts–Strogatz** small-world graph — rewire each ring edge
+  with probability $\beta$.
 
-| Network | Built by | Path length $L$ | Clustering $C$ |
-|---|---|---|---|
-| **Ring lattice** | each node connects to its `k/2` neighbours on each side of the ring | $\sim N / (2k)$ | $\approx 3/4$ |
-| **Erdős–Rényi** | each edge sampled independently with $p = k / (N-1)$ | $\sim \log N / \log k$ | $\approx k / N$ |
-| **Watts–Strogatz** | start from the ring, rewire each edge with probability $\beta$ | small for $\beta \gtrsim 10^{-2}$ | high for $\beta \lesssim 10^{-1}$ |
+For each we compute the **average path length** $L$ and **clustering
+coefficient** $C$, sweep $\beta \in [10^{-3}, 1]$ to locate the
+small-world window, and simulate random walks to estimate **cover
+time** and **mixing time**.
 
-The Watts–Strogatz model interpolates between the two extremes. The
-**small-world window** — where $L$ has already collapsed to random-graph
-length but $C$ is still close to the lattice value — lies around
-$\beta \in [10^{-2}, 10^{-1}]$.
-
-## The two metrics
-
-**Average path length**
-$$L = \frac{1}{N(N-1)} \sum_{i \neq j} d(i, j)$$
-where $d(i, j)$ is the shortest-path distance.
-
-**Clustering coefficient** (global / transitivity definition)
-$$C = \frac{3 \cdot \#\text{triangles}}{\#\text{paths of length } 2}$$
-*i.e.* the fraction of length-2 paths that close into a triangle.
-
-## Random walks
-
-The simple random walk on $G$ is a Markov chain with transition
-matrix $P_{ij} = 1 / d_i$ when $(i, j) \in E$. On a connected
-non-bipartite graph the unique stationary distribution is
-$$\pi_i = \frac{d_i}{2m},$$
-which reduces to the uniform distribution when every node has the
-same degree (ring lattice and Watts–Strogatz, in expectation).
-
-We estimate two characteristic times by simulation:
-
-* **Cover time** — expected number of steps until every node has been
-  visited at least once.
-* **Mixing time** — time for the walker's distribution to converge
-  (in total variation) to $\pi$.
-
-The small-world network has both times **dramatically shorter** than
-the regular ring: a few shortcuts are enough to make diffusion fast.
+!!! tip "Where to start"
+    - Curious about the math? → [Theory](theory.md)
+    - Looking for a function? → [API Reference](api/networks.md)
+    - Want to run the experiments? → see *Getting started* below.
 
 ## Code layout
 
@@ -69,31 +43,24 @@ SmallWorld/
 │   ├── 02_basic_metrics.ipynb
 │   ├── 03_small_world_window.ipynb
 │   └── 04_random_walks.ipynb
-├── docs/
-│   ├── index.md                  ← you are here
-│   └── api/                      pdoc-generated, build with `make docs`
-├── figures/                      generated plots and pyvis HTML
-└── informe/                      written report
+├── docs/                         this documentation
+└── figures/                      generated plots and pyvis HTML
 ```
-
-The API reference (built by `make docs`) lives at
-[`api/index.html`](api/index.html) and is auto-generated from the
-docstrings in `src/smallworld/`.
 
 ## Getting started
 
 ```bash
-make install     # install Python dependencies
-make docs        # build the API documentation
+make install     # install dependencies (mkdocs, networkx, pyvis, ...)
+make docs-serve  # live-reloading docs at http://localhost:8000
 jupyter lab      # open the notebooks
 ```
 
-See the project [README](../README.md) for the team split and the
-overall report structure.
+To build a static HTML site instead, run `make docs` — the result is
+written to `site/`.
 
 ## Authors
 
-* Lluís Gay
-* Sergi Prats
-* Ferran Villarta
-* Natan Sisoev
+- Lluís Gay
+- Sergi Prats
+- Ferran Villarta
+- Natan Sisoev

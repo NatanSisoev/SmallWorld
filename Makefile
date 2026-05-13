@@ -15,22 +15,22 @@ PYTHON ?= python
 help:
 	@echo "Available targets:"
 	@echo "  install      Install Python dependencies from requirements.txt"
-	@echo "  docs         Build static API documentation into docs/api/"
-	@echo "  docs-serve   Start a live-reloading docs server on http://localhost:8080"
+	@echo "  docs         Build the static documentation site into site/"
+	@echo "  docs-serve   Start a live-reloading docs server on http://localhost:8000"
 	@echo "  notebooks    Execute every notebook in-place (reproducibility check)"
-	@echo "  clean        Remove __pycache__ and the generated docs"
+	@echo "  clean        Remove __pycache__ and the built site"
 
 install:
 	$(PYTHON) -m pip install -r requirements.txt
 
 docs:
-	$(PYTHON) -m pdoc src.smallworld --output-directory docs/api --math
+	$(PYTHON) -m mkdocs build --strict
 
 docs-serve:
-	$(PYTHON) -m pdoc src.smallworld --math
+	$(PYTHON) -m mkdocs serve
 
 notebooks:
 	$(PYTHON) -c "import subprocess, sys; from pathlib import Path; [subprocess.check_call([sys.executable, '-m', 'jupyter', 'nbconvert', '--to', 'notebook', '--execute', '--inplace', str(nb)]) for nb in sorted(Path('notebooks').glob('*.ipynb'))]"
 
 clean:
-	$(PYTHON) -c "import shutil, pathlib; [shutil.rmtree(p, ignore_errors=True) for p in list(pathlib.Path('.').rglob('__pycache__')) + [pathlib.Path('docs/api'), pathlib.Path('.ipynb_checkpoints')]]"
+	$(PYTHON) -c "import shutil, pathlib; [shutil.rmtree(p, ignore_errors=True) for p in list(pathlib.Path('.').rglob('__pycache__')) + [pathlib.Path('site'), pathlib.Path('.ipynb_checkpoints')]]"
