@@ -1,18 +1,21 @@
 """SmallWorld - library code for the small-world course project.
 
-Two submodules are provided:
+The construction algorithms (ring, ER, WS) are written by hand;
+:class:`networkx.Graph` is used only as the underlying container so
+visualisation and standard graph utilities keep working.
 
-* :mod:`src.smallworld.networks` - builders for the three reference
-  networks: a regular ring lattice, an Erdős-Rényi random graph, and a
-  Watts-Strogatz small-world graph.
-* :mod:`src.smallworld.plotting` - visualisation helpers, both static
-  (matplotlib, used for the report figures) and interactive (pyvis,
-  exported as standalone HTML pages).
+Submodules
+----------
+* :mod:`src.smallworld.networks`    - by-hand graph builders.
+* :mod:`src.smallworld.networks_nx` - reference implementation using
+  NetworkX's own constructors, kept for equivalence testing.
+* :mod:`src.smallworld.plotting`    - visualisation helpers, both static
+  (matplotlib) and interactive (pyvis).
 
-Forthcoming: ``metrics`` (average path length, clustering, β-sweep)
-and ``walks`` (random-walk simulation, cover time, mixing time).
-
-The numbered notebooks under ``notebooks/`` are the experiments that
-consume this code; ``docs/index.md`` is the human-readable project
-overview.
+Forthcoming: :mod:`metrics` (hand-written L and C) and :mod:`walks`
+(random-walk simulation, cover time, mixing time).
 """
+
+from src.smallworld.networks import build_all, build_er, build_ring, build_ws
+
+__all__ = ["build_all", "build_er", "build_ring", "build_ws"]

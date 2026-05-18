@@ -1,13 +1,9 @@
-"""Hand-built network constructors for the small-world study.
+"""Network constructors for the small-world study.
 
-This module implements the three reference network models from scratch:
-:func:`networkx.Graph` is used only as the underlying container so that
-visualisation and standard graph utilities keep working; every edge is
-added by our own code. A reference implementation that delegates to the
-``networkx`` constructors is preserved in :mod:`src.smallworld.networks_nx`
-for equivalence testing.
+This module wraps :mod:`networkx` builders for the three reference
+network models used throughout the project:
 
-* :func:`build_ring` — regular ring lattice (deterministic).
+* :func:`build_ring` — regular ring lattice (Watts-Strogatz with β = 0).
 * :func:`build_er`   — Erdős-Rényi G(N, p) with expected degree ``k``.
 * :func:`build_ws`   — Watts-Strogatz with rewiring probability ``β``.
 
@@ -17,8 +13,6 @@ an undirected, unweighted :class:`networkx.Graph` on ``N`` nodes labelled
 """
 
 from __future__ import annotations
-
-import random
 
 import networkx as nx
 
@@ -47,23 +41,15 @@ def build_ring(N: int, k: int, *, seed: int | None = None) -> nx.Graph:
         The ring lattice ``C(N, k)``.
     """
     _validate_ring_params(N, k)
-    G = nx.Graph()
-    G.add_nodes_from(range(N))
-    half = k // 2
-    for i in range(N):
-        for j in range(1, half + 1):
-            G.add_edge(i, (i + j) % N)
-    return G
+    return nx.watts_strogatz_graph(N, k, p=0.0, seed=seed)
 
 
 def build_er(N: int, k: int, *, seed: int | None = None) -> nx.Graph:
     """Build an Erdős-Rényi G(N, p) with expected average degree ``k``.
 
-    The edge probability is ``p = k / (N - 1)`` so that the expected
-    degree of every node equals ``k``, matching the regular and
-    Watts-Strogatz networks for fair comparison. Each unordered pair
-    ``{i, j}`` with ``i < j`` is sampled independently with probability
-    ``p``.
+    The edge probability is set to ``p = k / (N - 1)`` so that the
+    expected degree of every node equals ``k``, matching the regular and
+    Watts-Strogatz networks for fair comparison.
 
     Parameters
     ----------
@@ -82,15 +68,8 @@ def build_er(N: int, k: int, *, seed: int | None = None) -> nx.Graph:
         to the largest connected component.
     """
     _validate_Nk(N, k)
-    rng = random.Random(seed)
     p = k / (N - 1)
-    G = nx.Graph()
-    G.add_nodes_from(range(N))
-    for i in range(N):
-        for j in range(i + 1, N):
-            if rng.random() < p:
-                G.add_edge(i, j)
-    return G
+    return nx.erdos_renyi_graph(N, p, seed=seed)
 
 
 def build_ws(
@@ -104,12 +83,9 @@ def build_ws(
 ) -> nx.Graph:
     """Build a Watts-Strogatz small-world graph.
 
-    Starts from the ring lattice ``C(N, k)`` and iterates its edges in
-    the canonical Watts-Strogatz order — for each offset ``j = 1..k/2``,
-    visit every node ``u = 0..N-1`` and consider the edge ``(u, u+j)``
-    — rewiring it with probability ``beta`` to a uniformly random
-    non-neighbour ``≠ u``. Self-loops and duplicate edges are forbidden;
-    if no valid target exists the edge is left untouched.
+    Starts from the ring lattice ``C(N, k)`` and rewires each edge with
+    probability ``beta`` to a uniformly random endpoint, avoiding
+    self-loops and duplicate edges.
 
     Parameters
     ----------
@@ -139,38 +115,10 @@ def build_ws(
         raise ValueError(f"beta must be in [0, 1] (got {beta})")
 
     if connected:
-        for attempt in range(tries):
-            attempt_seed = seed if seed is None else seed + attempt
-            G = _build_ws_once(N, k, beta, seed=attempt_seed)
-            if nx.is_connected(G):
-                return G
-        raise RuntimeError(
-            f"Failed to produce a connected WS graph after {tries} tries; "
-            f"try a larger beta or a larger k."
+        return nx.connected_watts_strogatz_graph(
+            N, k, p=beta, tries=tries, seed=seed
         )
-    return _build_ws_once(N, k, beta, seed=seed)
-
-
-def _build_ws_once(
-    N: int, k: int, beta: float, *, seed: int | None
-) -> nx.Graph:
-    """One Watts-Strogatz rewiring pass (no connectivity retry)."""
-    rng = random.Random(seed)
-    G = build_ring(N, k)
-    half = k // 2
-    for j in range(1, half + 1):
-        for u in range(N):
-            v = (u + j) % N
-            if rng.random() < beta:
-                candidates = [
-                    w for w in range(N) if w != u and not G.has_edge(u, w)
-                ]
-                if not candidates:
-                    continue
-                new_v = rng.choice(candidates)
-                G.remove_edge(u, v)
-                G.add_edge(u, new_v)
-    return G
+    return nx.watts_strogatz_graph(N, k, p=beta, seed=seed)
 
 
 def build_all(
