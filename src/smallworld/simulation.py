@@ -3,9 +3,7 @@
 import networkx as nx
 import numpy as np
 import numpy.typing as npt
-from src.smallworld.networks import build_all                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
-import src.smallworld.networks 
-
+from src.smallworld.networks import build_all
 
 def random_walk_step(G: nx.Graph, current_node: int) -> int:
     """Take a random step from the current node to one of its neighbours."""
