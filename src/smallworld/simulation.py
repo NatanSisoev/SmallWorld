@@ -79,27 +79,3 @@ def build_transition_matrix(G: nx.Graph) -> tuple[npt.NDArray[np.float64], int]:
                                   dtype=float)
         
     return P_mat, dim
-
-if __name__ == "__main__":
-
-    N, k, beta = 50, 10, 0.1
-    graphs = build_all(N=N, k=k, beta=beta, seed=42)
-    G = graphs["ring"]
-    
-    # reproducibility
-    seed = 42
-    np.random.seed(seed=seed)
-    root_node = np.random.choice(G.nodes)
-    
-    # FAST_TEST: random_step
-    next_node = random_walk_step(G, current_node=root_node)
-    print(f"\nNext node: {next_node}\n")
-    
-    # FAST_TEST: random_walk
-    root_node = np.random.choice(G.nodes)
-    trace = random_walk(G, start=root_node, n_steps=4)
-    print(f"\nTrace: {trace}\n")
-    
-    # FAST_TEST: mixing_time
-    _, time_average = mixing_time(G, 50)
-    print(time_average)
