@@ -6,10 +6,11 @@ import numpy as np
 
 from src.smallworld.networks import build_all
 from src.smallworld.simulation import (
-    random_walk_step, 
-    random_walk, 
+    random_walk_step,
+    random_walk,
     build_transition_matrix,
-    mixing_time
+    mixing_time,
+    cover_time,
 )
 
 
@@ -117,3 +118,34 @@ def test_reproducible_with_seed(ring):
     _, t1 = mixing_time(ring, n_simulations=5, seed=99)
     _, t2 = mixing_time(ring, n_simulations=5, seed=99)
     assert t1 == pytest.approx(t2)
+    
+# ------------ Cover Time ------------
+
+def test_cover_time_return_types(ring: nx.Graph):
+    steps, avg = cover_time(ring, n_simulations=5, seed=42)
+    assert isinstance(steps, list)
+    assert isinstance(avg, (float, np.floating))
+
+def test_cover_time_num_simulations(ring: nx.Graph):
+    n_sim = 5
+    steps, _ = cover_time(ring, n_simulations=n_sim, seed=42)
+    assert len(steps) == n_sim
+
+def test_cover_time_steps_nonnegative(ring: nx.Graph):
+    steps, _ = cover_time(ring, n_simulations=5, seed=42)
+    assert all(s >= 0 for s in steps)
+
+def test_cover_time_avg_consistent(ring: nx.Graph):
+    """Average must match the mean of the returned steps list."""
+    steps, avg = cover_time(ring, n_simulations=10, seed=42)
+    assert avg == pytest.approx(np.mean(steps))
+
+def test_cover_time_reproducible_with_seed(ring: nx.Graph):
+    _, avg1 = cover_time(ring, n_simulations=5, seed=7)
+    _, avg2 = cover_time(ring, n_simulations=5, seed=7)
+    assert avg1 == pytest.approx(avg2)
+
+def test_cover_time_max_iter_returns_inf(ring: nx.Graph):
+    """A tiny max_iter forces non-convergence → average must be np.inf."""
+    _, avg = cover_time(ring, n_simulations=3, seed=42, max_iter=1)
+    assert avg == np.inf
