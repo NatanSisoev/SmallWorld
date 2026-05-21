@@ -22,6 +22,41 @@ def random_walk(G: nx.Graph, start: int, n_steps: int) -> list[int]:
         current_node = next_node
     
     return trace
+
+def cover_time(G: nx.Graph, n_simulations: int, seed: int = None, max_iter: int = 100000) -> tuple[list[int], np.float64]:
+    """Calculate the average steps across the given simulations.
+    Returns:
+        tuple[list[int], np.float64]: Number of steps to visit all nodes for each simulation and the average number of steps."""
+    
+    all_nodes = list(G.nodes)
+    num_steps = []
+    
+    if seed:
+        np.random.seed(seed)
+        
+    for sim in range(n_simulations):
+        current_node =  int(np.random.choice(all_nodes))
+        to_visit = set(all_nodes)
+        
+        to_visit.discard(current_node)
+        iter = 0
+        
+        while to_visit and (iter < max_iter):
+            next_node = random_walk_step(G=G, current_node=current_node)
+            to_visit.discard(next_node)
+            
+            if not to_visit:
+                num_steps.append(iter)
+                break
+            
+            current_node = next_node
+            iter += 1
+            
+        if iter >= max_iter:
+            return num_steps, np.inf # one of the simulations has not converged
+    
+    return num_steps, np.average(num_steps)
+            
         
 def mixing_time(G: nx.Graph, n_simulations: int, seed: int = None, tol: float = 1e-5, max_iter: int = 10000) -> tuple[int, dict[int, float]]:
     """Calculate average steps until convergence to the stationary distribution.

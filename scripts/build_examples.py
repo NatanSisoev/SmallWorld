@@ -54,7 +54,7 @@ STATIC_LAYOUTS = {"ring": "circular", "er": "spring", "ws": "circular"}
 
 for name, G in graphs.items():
     layout = STATIC_LAYOUTS[name]
-    net    = to_pyvis(G, layout=layout, seed=SEED)
+    net    = to_pyvis(G, layout=layout, seed=SEED, physics=True)
     dest   = save_pyvis(net, OUT_DIR / f"{name}.html")
     print(f"  ✓ {dest.relative_to(ROOT)}")
 
