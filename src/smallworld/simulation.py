@@ -3,6 +3,7 @@
 import networkx as nx
 import numpy as np
 import numpy.typing as npt
+import matplotlib.pyplot as plt
 from src.smallworld.networks import build_all
 
 def random_walk_step(G: nx.Graph, current_node: int) -> int:
@@ -112,3 +113,29 @@ def build_transition_matrix(G: nx.Graph) -> tuple[npt.NDArray[np.float64], int]:
                                   dtype=float)
         
     return P_mat, dim
+
+def plot_mixing_time_distribution(prob_distribution: npt.NDArray[np.float64], name_graph: str = None):
+    """Receives an array of on distribution or an array of arrays of distributions across the different simulations"""
+    
+    if not isinstance(prob_distribution[0], np.float64):
+        prob_distribution = np.average(prob_distribution, axis=0) # average across simulations
+        
+    x_axis = np.arange(len(prob_distribution))
+    y_axis = prob_distribution
+
+    plt.figure(figsize=(8, 4.5))
+
+    plt.bar(x_axis, y_axis, width=0.75, edgecolor="black", linewidth=0.8, alpha=0.85)
+
+    plt.xlabel("Nodes", fontsize=12)
+    plt.ylabel(r"$P(X = \mathrm{node}_i)$", fontsize=12)
+    if name_graph:
+        plt.title(f"Mixing Time Probability Distribution for Graph: {name_graph}", fontsize=14, fontweight="bold")
+    else:
+        plt.title("Mixing Time Probability Distribution", fontsize=14, fontweight="bold")
+    plt.xticks(x_axis)
+    plt.ylim(0, max(y_axis) * 1.15)
+
+    plt.grid(axis="y", linestyle="--", alpha=0.4)
+    plt.tight_layout()
+    plt.show()

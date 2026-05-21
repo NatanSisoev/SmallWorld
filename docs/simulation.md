@@ -62,3 +62,46 @@ A handful of long-range shortcuts dramatically reduce the cover time
 relative to the pure ring, approaching the Erdős–Rényi scaling.
 
 <iframe src="../examples/cover_ws.html" width="100%" height="460" style="border: 1px solid #ddd; border-radius: 4px;"></iframe>
+
+---
+
+## Mixing time
+
+The **mixing time** $t_{\text{mix}}(\varepsilon)$ of a random walk on a graph
+$G$ measures how many steps it takes for the walk's probability distribution to
+become indistinguishable (within tolerance $\varepsilon$) from the **stationary
+distribution** $\pi$.
+
+For a random walk on an undirected graph the stationary distribution is
+
+$$
+\pi(v) = \frac{\deg(v)}{2|E|}
+$$
+
+which is uniform for $k$-regular graphs.  Convergence is tracked via the
+$\ell^\infty$ norm between consecutive distributions:
+
+$$
+t_{\text{mix}} = \min\bigl\{t : \|\mathbf{p}_{t} - \mathbf{p}_{t+1}\|_{\infty} < \varepsilon\bigr\}
+$$
+
+Equivalently, the mixing time is controlled by the **spectral gap**
+$\lambda = 1 - \lambda_2(P)$ of the transition matrix $P$:
+
+$$
+t_{\text{mix}}(\varepsilon) \;\sim\; \frac{\ln(1/\varepsilon)}{\lambda}
+$$
+
+A larger spectral gap $\Rightarrow$ faster mixing.
+
+| Graph | Mixing time scaling |
+|---|---|
+| Ring lattice | $\Theta(N^2)$ — small spectral gap, slow convergence |
+| Erdős–Rényi | $\Theta(\log N)$ — large spectral gap, fast convergence |
+| Watts–Strogatz | $\Theta(\log N)$ — shortcuts enlarge the spectral gap |
+
+The simulation starts from a random initial distribution $\mathbf{p}_0$ (drawn
+uniformly and normalised), multiplies by the transition matrix at each step, and
+stops when consecutive distributions differ by less than `tol` in the
+$\ell^\infty$ norm.  Results are averaged over `n_simulations` independent
+runs.

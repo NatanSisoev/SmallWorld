@@ -42,6 +42,7 @@ nav:
   - API Reference:
       - Networks: api/networks.md
       - Plotting: api/plotting.md
+      - Simulation: api/simulation.md
 
 plugins:
   - search
