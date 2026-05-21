@@ -36,7 +36,12 @@ import networkx as nx
 
 from src.smallworld.plotting import _layout
 
-__all__ = ["build_walk_visualization", "save_walk_visualization"]
+__all__ = [
+    "build_walk_visualization",
+    "save_walk_visualization",
+    "build_cover_time_visualization",
+    "save_cover_time_visualization",
+]
 
 
 # ---------------------------------------------------------------------------
@@ -468,6 +473,317 @@ network.on('click', params => {{
 // ── initialise ───────────────────────────────────────────────────────────────
 refreshColors();
 updateStats();
+</script>
+</body>
+</html>
+"""
+
+
+# ---------------------------------------------------------------------------
+# Cover-time simulation visualisation
+# ---------------------------------------------------------------------------
+
+def build_cover_time_visualization(
+    G: nx.Graph,
+    *,
+    title: str = "",
+) -> str:
+    """Generate a self-contained HTML page for interactive cover-time simulation.
+
+    The page embeds the graph adjacency list and runs the cover-time algorithm
+    entirely in JavaScript, so no server is required.  Users can choose the
+    number of simulations and view the resulting distribution as a histogram.
+
+    Parameters
+    ----------
+    G : networkx.Graph
+        Graph to simulate on.
+    title : str, default ``""``
+        Optional heading rendered above the controls.
+
+    Returns
+    -------
+    str
+        A complete, UTF-8 HTML document.
+    """
+    adjacency: dict[str, list[int]] = {
+        str(node): sorted(list(G.neighbors(node))) for node in G.nodes()
+    }
+    adj_json = json.dumps(adjacency, separators=(",", ":"))
+    n_nodes  = G.number_of_nodes()
+    title_html = (
+        f"<h3>{title}</h3>"
+        if title
+        else ""
+    )
+    return _COVER_TIME_HTML_TEMPLATE.format(
+        title_html=title_html,
+        adj_json=adj_json,
+        n_nodes=n_nodes,
+    )
+
+
+def save_cover_time_visualization(
+    G: nx.Graph,
+    path: "str | Path",
+    *,
+    title: str = "",
+) -> "Path":
+    """Write the cover-time visualisation HTML to *path*.
+
+    Parameters
+    ----------
+    G : networkx.Graph
+        Graph to simulate on.
+    path : str or Path
+        Destination ``.html`` file.
+    title : str, default ``""``
+        Forwarded to :func:`build_cover_time_visualization`.
+
+    Returns
+    -------
+    Path
+        The path the file was written to.
+    """
+    path = Path(path)
+    path.write_text(
+        build_cover_time_visualization(G, title=title),
+        encoding="utf-8",
+    )
+    return path
+
+
+_COVER_TIME_HTML_TEMPLATE = """\
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cover Time – SmallWorld</title>
+<style>
+  * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+  body {{
+    font-family: sans-serif;
+    font-size: 13px;
+    background: #fafafa;
+    color: #222;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: 10px;
+    gap: 8px;
+    overflow: hidden;
+  }}
+  h3 {{ font-size: 15px; flex-shrink: 0; margin-bottom: 2px; }}
+  #controls {{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 8px 12px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }}
+  label {{ font-size: 12px; color: #666; }}
+  input[type=number] {{
+    width: 80px;
+    padding: 4px 6px;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+    font-size: 13px;
+  }}
+  button {{
+    padding: 5px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    background: #1976D2;
+    color: #fff;
+    transition: filter .15s;
+  }}
+  button:hover  {{ filter: brightness(0.88); }}
+  button:active {{ filter: brightness(0.78); }}
+  button:disabled {{ opacity: .45; cursor: default; filter: none; }}
+  #status {{ font-size: 12px; color: #888; }}
+  #stats-row {{
+    display: none;
+    flex-direction: row;
+    gap: 8px;
+    flex-shrink: 0;
+  }}
+  .stat-card {{
+    flex: 1;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 8px 10px;
+    text-align: center;
+  }}
+  .stat-value {{ font-size: 22px; font-weight: 700; color: #1976D2; }}
+  .stat-label {{ font-size: 10px; color: #888; margin-top: 2px; }}
+  #chart-box {{
+    display: none;
+    flex: 1;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 8px 12px;
+    min-height: 0;
+  }}
+  #chart-lbl {{ font-size: 11px; color: #666; text-align: center; margin-bottom: 4px; }}
+  #histogram {{ display: block; }}
+</style>
+</head>
+<body>
+{title_html}
+<div id="controls">
+  <label for="n-sims">Simulations:</label>
+  <input type="number" id="n-sims" value="200" min="1" max="2000">
+  <button id="run-btn">&#9654; Run</button>
+  <span id="status">Press Run to start.</span>
+</div>
+<div id="stats-row">
+  <div class="stat-card">
+    <div class="stat-value" id="stat-avg">—</div>
+    <div class="stat-label">Average cover time</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" id="stat-std">—</div>
+    <div class="stat-label">Std deviation</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" id="stat-min">—</div>
+    <div class="stat-label">Minimum</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" id="stat-max">—</div>
+    <div class="stat-label">Maximum</div>
+  </div>
+</div>
+<div id="chart-box">
+  <div id="chart-lbl">Cover time distribution (steps to visit all {n_nodes} nodes)</div>
+  <canvas id="histogram"></canvas>
+</div>
+<script>
+const ADJ     = {adj_json};
+const N_NODES = {n_nodes};
+
+function singleCoverTime() {{
+  const keys    = Object.keys(ADJ);
+  let current   = parseInt(keys[Math.floor(Math.random() * keys.length)]);
+  const toVisit = new Set(keys.map(Number));
+  toVisit.delete(current);
+  let steps     = 0;
+  const MAX     = 100000;
+  while (toVisit.size > 0 && steps < MAX) {{
+    const nb = ADJ[String(current)];
+    current  = nb[Math.floor(Math.random() * nb.length)];
+    toVisit.delete(current);
+    steps++;
+  }}
+  return toVisit.size === 0 ? steps : null;
+}}
+
+function drawHistogram(data) {{
+  const box    = document.getElementById('chart-box');
+  const canvas = document.getElementById('histogram');
+  const W      = box.clientWidth > 0  ? box.clientWidth  - 24 : 500;
+  const H      = box.clientHeight > 0 ? box.clientHeight - 44 : 200;
+  canvas.width  = Math.max(200, W);
+  canvas.height = Math.max(140, H);
+
+  const ctx  = canvas.getContext('2d');
+  const minV = Math.min(...data), maxV = Math.max(...data);
+  const range = maxV - minV || 1;
+  const nBins = Math.min(40, Math.max(10, Math.ceil(Math.sqrt(data.length))));
+  const binW  = range / nBins;
+
+  const bins = new Array(nBins).fill(0);
+  data.forEach(v => {{
+    const b = Math.min(nBins - 1, Math.floor((v - minV) / binW));
+    bins[b]++;
+  }});
+  const maxCount = Math.max(...bins);
+
+  const pad = {{ t: 10, r: 10, b: 30, l: 42 }};
+  const cW  = canvas.width  - pad.l - pad.r;
+  const cH  = canvas.height - pad.t - pad.b;
+  const bW  = cW / nBins;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.strokeStyle = '#f0f0f0';
+  ctx.lineWidth   = 1;
+  for (let i = 1; i <= 4; i++) {{
+    const y = pad.t + cH * (1 - i / 4);
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + cW, y); ctx.stroke();
+  }}
+
+  ctx.fillStyle = '#1976D2';
+  bins.forEach((count, i) => {{
+    const bH = (count / maxCount) * cH;
+    ctx.fillRect(pad.l + i * bW, pad.t + cH - bH, Math.max(1, bW - 1), bH);
+  }});
+
+  ctx.strokeStyle = '#aaa';
+  ctx.lineWidth   = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t + cH);
+  ctx.lineTo(pad.l + cW, pad.t + cH);
+  ctx.stroke();
+
+  ctx.fillStyle = '#666';
+  ctx.font      = '10px sans-serif';
+  ctx.textAlign = 'center';
+  for (let i = 0; i <= 5; i++) {{
+    const x   = pad.l + (i / 5) * cW;
+    const val = Math.round(minV + (i / 5) * range);
+    ctx.fillText(val, x, pad.t + cH + 14);
+  }}
+  ctx.textAlign = 'right';
+  ctx.fillText(maxCount, pad.l - 3, pad.t + 9);
+  ctx.fillText('0',      pad.l - 3, pad.t + cH);
+}}
+
+document.getElementById('run-btn').addEventListener('click', () => {{
+  const n      = Math.max(1, Math.min(2000, parseInt(document.getElementById('n-sims').value) || 200));
+  const btn    = document.getElementById('run-btn');
+  const status = document.getElementById('status');
+  btn.disabled       = true;
+  status.textContent = 'Running…';
+
+  setTimeout(() => {{
+    const results = [];
+    for (let i = 0; i < n; i++) {{
+      const t = singleCoverTime();
+      if (t !== null) results.push(t);
+    }}
+
+    if (results.length === 0) {{
+      status.textContent = 'No simulations converged.';
+      btn.disabled = false;
+      return;
+    }}
+
+    const avg = results.reduce((a, b) => a + b, 0) / results.length;
+    const std = Math.sqrt(results.reduce((a, b) => a + (b - avg) ** 2, 0) / results.length);
+
+    document.getElementById('stat-avg').textContent = avg.toFixed(1);
+    document.getElementById('stat-std').textContent = std.toFixed(1);
+    document.getElementById('stat-min').textContent = Math.min(...results);
+    document.getElementById('stat-max').textContent = Math.max(...results);
+
+    document.getElementById('stats-row').style.display = 'flex';
+    document.getElementById('chart-box').style.display = 'block';
+    drawHistogram(results);
+
+    status.textContent = 'Done — ' + results.length + ' simulation' + (results.length > 1 ? 's' : '') + '.';
+    btn.disabled = false;
+  }}, 10);
+}});
 </script>
 </body>
 </html>

@@ -34,7 +34,7 @@ sys.path.insert(0, str(ROOT))
 
 from src.smallworld.networks import build_all
 from src.smallworld.plotting import to_pyvis, save_pyvis
-from src.smallworld.visualization import save_walk_visualization
+from src.smallworld.visualization import save_walk_visualization, save_cover_time_visualization
 
 # ── parameters ────────────────────────────────────────────────────────────────
 N    = 30
@@ -73,6 +73,22 @@ for name, G in graphs.items():
         start=0,
         layout=cfg["layout"],
         seed=SEED,
+        title=cfg["title"],
+    )
+    print(f"  ✓ {dest.relative_to(ROOT)}")
+
+# ── cover-time simulation views ───────────────────────────────────────────────
+COVER_CFG = {
+    "ring": {"title": "Ring lattice – cover time"},
+    "er":   {"title": "Erdős–Rényi – cover time"},
+    "ws":   {"title": "Watts–Strogatz (β=0.1) – cover time"},
+}
+
+for name, G in graphs.items():
+    cfg  = COVER_CFG[name]
+    dest = save_cover_time_visualization(
+        G,
+        OUT_DIR / f"cover_{name}.html",
         title=cfg["title"],
     )
     print(f"  ✓ {dest.relative_to(ROOT)}")
