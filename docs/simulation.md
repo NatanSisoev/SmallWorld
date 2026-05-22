@@ -105,3 +105,31 @@ uniformly and normalised), multiplies by the transition matrix at each step, and
 stops when consecutive distributions differ by less than `tol` in the
 $\ell^\infty$ norm.  Results are averaged over `n_simulations` independent
 runs.
+
+---
+
+## Interactive comparison: effect of $\beta$
+
+The panel below lets you **directly compare** cover time and mixing time across
+the three graph types for any choice of parameters.
+
+1. Adjust $N$, $k$, $\beta$, and the number of simulations.
+2. Click **▶ Run** to see a side-by-side bar chart and summary table for a
+   single value of $\beta$.
+3. Click **↻ Sweep β** to trace how both metrics change as $\beta$ sweeps from
+   0.001 (almost a pure ring) to 0.7 (highly random) — with the ring and
+   Erdős–Rényi values drawn as dashed reference lines.
+
+!!! tip "What to look for"
+    Already at $\beta \approx 0.01$–$0.1$ the Watts–Strogatz graph achieves
+    cover and mixing times **close to the Erdős–Rényi reference**, while still
+    keeping the high clustering of the regular ring.  This is the
+    **small-world window**: a few random shortcuts are enough to dramatically
+    speed up exploration of the network.
+
+<iframe
+  src="../examples/compare_times.html"
+  width="100%"
+  height="720"
+  style="border: 1px solid #ddd; border-radius: 4px; overflow: hidden;">
+</iframe>

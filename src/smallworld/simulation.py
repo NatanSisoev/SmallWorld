@@ -1,5 +1,4 @@
-"""Defines the needed functions to make the simulations
-"""
+"""Defines the functions needed to run the simulations."""
 import networkx as nx
 import numpy as np
 import numpy.typing as npt
@@ -8,13 +7,13 @@ from src.smallworld.networks import build_all
 
 # ============================= Basic functionalities =============================
 def random_walk_step(G: nx.Graph, current_node: int) -> int:
-    """Take a random step from the current node to one of its neighbours."""
+    """Take a random step from the current node to one of its neighbors."""
     return np.random.choice(
         list(G.neighbors(current_node))
     )
     
 def random_walk(G: nx.Graph, start: int, n_steps: int) -> list[int]:
-    """Simulates n_steps steps. Returns list of all visited nodes."""
+    """Simulate n_steps random-walk steps and return the visited nodes."""
     trace = []
     current_node = start
     for step in range(n_steps):
@@ -31,27 +30,27 @@ def _find_isolated_nodes(G: nx.Graph) -> list[int]:
     return list(nx.isolates(G=G))
 
 
-def cover_time(G: nx.Graph, n_simulations: int, seed: int = None, max_iter: int = 100000) -> tuple[list[int], np.float64]:
+def cover_time(G: nx.Graph, n_simulations: int, seed: int = None, max_iter: int = 100000) -> tuple[list[int], float]:
     """Calculate the average steps across the given simulations.
     Returns:
         tuple[list[int], np.float64]: Number of steps to visit all nodes for each simulation and the average number of steps."""
     
     
-    unconnected_nodes = _find_isolated_nodes(G=G)    
+    isolated_nodes = _find_isolated_nodes(G=G)    
     all_nodes = list(G.nodes)
     
-    # control if there are isolated nodes
-    if unconnected_nodes:
-        print("There are few nodes unconnected:")
-        print(unconnected_nodes)
+    # check whether there are isolated nodes
+    if isolated_nodes:
+        print("There are some isolated nodes:")
+        print(isolated_nodes)
         print("\nCalculating cover time without isolated nodes...")
-        all_nodes = list(set(all_nodes) - set(unconnected_nodes))
+        all_nodes = list(set(all_nodes) - set(isolated_nodes))
         
     num_steps = []
     
-    if seed:
+    if seed is not None:
         np.random.seed(seed)
-        
+
     for sim in range(n_simulations):
         current_node =  int(np.random.choice(all_nodes))
         to_visit = set(all_nodes)
@@ -64,7 +63,7 @@ def cover_time(G: nx.Graph, n_simulations: int, seed: int = None, max_iter: int 
             to_visit.discard(next_node)
             
             if not to_visit:
-                num_steps.append(iter)
+                num_steps.append(iter + 1)
                 break
             
             current_node = next_node
@@ -76,7 +75,13 @@ def cover_time(G: nx.Graph, n_simulations: int, seed: int = None, max_iter: int 
     return num_steps, np.average(num_steps)
             
         
-def mixing_time(G: nx.Graph, n_simulations: int, seed: int = None, tol: float = 1e-5, max_iter: int = 10000) -> tuple[int, dict[int, float]]:
+def mixing_time(G: nx.Graph, 
+                n_simulations: int, 
+                seed: int | None = None, 
+                tol: float = 1e-5, 
+                max_iter: int = 10000
+) -> tuple[dict[int, dict[str, int | npt.NDArray[np.float64]]], float]:
+    
     """Calculate average steps until convergence to the stationary distribution.
     Returns:
         tuple[int, dict[int, float]]: Number of steps to converge and the stationary distribution found.
@@ -84,7 +89,7 @@ def mixing_time(G: nx.Graph, n_simulations: int, seed: int = None, tol: float = 
     P_mat, dim = build_transition_matrix(G=G)
     
     # reproducibility
-    if seed:
+    if seed is not None:
         np.random.seed(seed)
     
     out_dic = {}
@@ -98,7 +103,7 @@ def mixing_time(G: nx.Graph, n_simulations: int, seed: int = None, tol: float = 
         for iter in range(max_iter):
             next_vec = P_mat @ original_vec
             
-            if np.max(original_vec - next_vec) < tol:
+            if np.max(np.abs(original_vec - next_vec)) < tol:
                 # save info in dictionary
                 out_dic[sim] = {
                     "iters": iter,
@@ -116,7 +121,7 @@ def mixing_time(G: nx.Graph, n_simulations: int, seed: int = None, tol: float = 
 
 
 def build_transition_matrix(G: nx.Graph) -> tuple[npt.NDArray[np.float64], int]:
-    """Calculates the transition matrix of the given graph"""
+    """Calculate the transition matrix of the given graph."""
 
     dim = G.number_of_nodes()
     P_mat = np.zeros((dim, dim), dtype=float)
@@ -143,14 +148,15 @@ def plot_cover_time(steps_by_sim: list[int], name_graph: str = None):
     plt.figure(figsize=(10,6))
     plt.hist(x=steps_arr, bins=len(vals_unique), color="skyblue", edgecolor="black")
     
-    plt.xlabel("Values")    
+    plt.xlabel("Number of steps")    
     plt.ylabel("Frequency")
     if name_graph:
         plt.title(f"Histogram - Cover Time for {name_graph}", fontsize=14, fontweight="bold")    
     else: 
-        plt.title(f"Histogram - Cover Time", fontsize=14, fontweight="bold")
+        plt.title("Histogram - Cover Time", fontsize=14, fontweight="bold")
     
-    ticks = np.arange(vals_unique[-1], step= int(vals_unique[-1] / 20) ) # last element is the biggest one
+    step = max(1, int(vals_unique[-1] / 20))
+    ticks = np.arange(0, vals_unique[-1], step=step) # last element is the biggest one
     plt.xticks(ticks=ticks)
     
     plt.grid(axis="y", linestyle="--", alpha=0.4)
@@ -158,7 +164,7 @@ def plot_cover_time(steps_by_sim: list[int], name_graph: str = None):
     plt.show()
         
 def plot_mixing_time_distribution(prob_distribution: npt.NDArray[np.float64], name_graph: str = None):
-    """Receives an array of on distribution or an array of arrays of distributions across the different simulations"""
+    """Receive one probability distribution or several distributions from different simulations."""
     
     if not isinstance(prob_distribution[0], np.float64):
         prob_distribution = np.average(prob_distribution, axis=0) # average across simulations
@@ -171,7 +177,7 @@ def plot_mixing_time_distribution(prob_distribution: npt.NDArray[np.float64], na
     plt.bar(x_axis, y_axis, width=0.75, edgecolor="black", linewidth=0.8, alpha=0.85)
 
     plt.xlabel("Nodes", fontsize=12)
-    plt.ylabel(r"$P(X = \mathrm{node}_i)$", fontsize=12)
+    plt.ylabel(r"$P(X = i)$", fontsize=12)
     if name_graph:
         plt.title(f"Mixing Time Probability Distribution for Graph: {name_graph}", fontsize=14, fontweight="bold")
     else:
