@@ -6,6 +6,7 @@ import numpy.typing as npt
 import matplotlib.pyplot as plt
 from src.smallworld.networks import build_all
 
+# ============================= Bassic functionalities =============================
 def random_walk_step(G: nx.Graph, current_node: int) -> int:
     """Take a random step from the current node to one of its neighbours."""
     return np.random.choice(
@@ -24,12 +25,28 @@ def random_walk(G: nx.Graph, start: int, n_steps: int) -> list[int]:
     
     return trace
 
+
+# ============================= Algorithms: Cover time and Mixing Time =============================
+def _find_isolated_nodes(G: nx.Graph) -> list[int]:
+    return list(nx.isolates(G=G))
+
+
 def cover_time(G: nx.Graph, n_simulations: int, seed: int = None, max_iter: int = 100000) -> tuple[list[int], np.float64]:
     """Calculate the average steps across the given simulations.
     Returns:
         tuple[list[int], np.float64]: Number of steps to visit all nodes for each simulation and the average number of steps."""
     
+    
+    unconnected_nodes = _find_isolated_nodes(G=G)    
     all_nodes = list(G.nodes)
+    
+    # control if there are isolated nodes
+    if unconnected_nodes:
+        print("There are few nodes unconnected:")
+        print(unconnected_nodes)
+        print("\nCalculating cover time without isolated nodes...")
+        all_nodes = list(set(all_nodes) - set(unconnected_nodes))
+        
     num_steps = []
     
     if seed:
@@ -96,7 +113,8 @@ def mixing_time(G: nx.Graph, n_simulations: int, seed: int = None, tol: float = 
     time_avg = np.average([out_dic[sim]["iters"] for sim in out_dic])
      
     return out_dic, time_avg
-    
+
+
 def build_transition_matrix(G: nx.Graph) -> tuple[npt.NDArray[np.float64], int]:
     """Calculates the transition matrix of the given graph"""
 
@@ -114,6 +132,31 @@ def build_transition_matrix(G: nx.Graph) -> tuple[npt.NDArray[np.float64], int]:
         
     return P_mat, dim
 
+
+# ============================= Plots =============================
+def plot_cover_time(steps_by_sim: list[int], name_graph: str = None):
+    """Plots histogram of a given list of integers, representing the number of steps required for 
+    the n-th simulation to have visited, at least once, all nodes of a graph"""
+    
+    steps_arr = np.array(steps_by_sim)
+    vals_unique = np.unique(steps_arr, sorted=True)
+    plt.figure(figsize=(10,6))
+    plt.hist(x=steps_arr, bins=len(vals_unique), color="skyblue", edgecolor="black")
+    
+    plt.xlabel("Values")    
+    plt.ylabel("Frequency")
+    if name_graph:
+        plt.title(f"Histogram - Cover Time for {name_graph}", fontsize=14, fontweight="bold")    
+    else: 
+        plt.title(f"Histogram - Cover Time", fontsize=14, fontweight="bold")
+    
+    ticks = np.arange(vals_unique[-1], step= int(vals_unique[-1] / 20) ) # last element is the biggest one
+    plt.xticks(ticks=ticks)
+    
+    plt.grid(axis="y", linestyle="--", alpha=0.4)
+    plt.tight_layout()
+    plt.show()
+        
 def plot_mixing_time_distribution(prob_distribution: npt.NDArray[np.float64], name_graph: str = None):
     """Receives an array of on distribution or an array of arrays of distributions across the different simulations"""
     
