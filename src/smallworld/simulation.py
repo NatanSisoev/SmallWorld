@@ -6,7 +6,7 @@ import numpy.typing as npt
 import matplotlib.pyplot as plt
 from src.smallworld.networks import build_all
 
-# ============================= Bassic functionalities =============================
+# ============================= Basic functionalities =============================
 def random_walk_step(G: nx.Graph, current_node: int) -> int:
     """Take a random step from the current node to one of its neighbours."""
     return np.random.choice(
