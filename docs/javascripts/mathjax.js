@@ -11,6 +11,7 @@ window.MathJax = {
   }
 };
 
+/* Re-typeset on each instant-navigation page swap (mkdocs-material). */
 document$.subscribe(() => {
-  MathJax.typesetPromise();
+  MathJax.startup.promise.then(() => MathJax.typesetPromise());
 });

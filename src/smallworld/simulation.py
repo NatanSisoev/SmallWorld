@@ -7,13 +7,41 @@ from src.smallworld.networks import build_all
 
 # ============================= Basic functionalities =============================
 def random_walk_step(G: nx.Graph, current_node: int) -> int:
-    """Take a random step from the current node to one of its neighbors."""
+    """Take a single random step from ``current_node`` to one of its neighbours.
+
+    Parameters
+    ----------
+    G : networkx.Graph
+        The graph on which to walk.
+    current_node : int
+        The node from which to step.
+
+    Returns
+    -------
+    int
+        A neighbour of ``current_node`` chosen uniformly at random.
+    """
     return np.random.choice(
         list(G.neighbors(current_node))
     )
     
 def random_walk(G: nx.Graph, start: int, n_steps: int) -> list[int]:
-    """Simulate n_steps random-walk steps and return the visited nodes."""
+    """Simulate a random walk of ``n_steps`` steps starting from ``start``.
+
+    Parameters
+    ----------
+    G : networkx.Graph
+        The graph on which to walk.
+    start : int
+        Starting node.
+    n_steps : int
+        Number of steps to take.
+
+    Returns
+    -------
+    list[int]
+        Sequence of visited nodes (excluding the start), of length ``n_steps``.
+    """
     trace = []
     current_node = start
     for step in range(n_steps):
@@ -31,9 +59,42 @@ def _find_isolated_nodes(G: nx.Graph) -> list[int]:
 
 
 def cover_time(G: nx.Graph, n_simulations: int, seed: int = None, max_iter: int = 100000) -> tuple[list[int], float]:
-    """Calculate the average steps across the given simulations.
-    Returns:
-        tuple[list[int], np.float64]: Number of steps to visit all nodes for each simulation and the average number of steps."""
+    """Estimate the cover time of ``G`` by Monte-Carlo simulation.
+
+    The **cover time** $C(G)$ is the expected number of steps a random walk
+    needs to visit every node at least once.  This function approximates it by
+    averaging over many independent simulations, each started from a uniformly
+    random non-isolated node.
+
+    Empirical scaling laws:
+
+    | Graph | Scaling |
+    |---|---|
+    | Ring lattice | $\\Theta(N^2)$ |
+    | Erdős–Rényi / Watts–Strogatz | $\\Theta(N \\log N)$ |
+
+    Parameters
+    ----------
+    G : networkx.Graph
+        Graph to simulate on.  Isolated nodes are automatically excluded from
+        both the start set and the set of nodes to visit.
+    n_simulations : int
+        Number of independent random walks to run.
+    seed : int, optional
+        Seed for :func:`numpy.random.seed` (``seed=0`` is supported).
+    max_iter : int, default 100 000
+        Hard step limit per simulation.  If a walk has not covered all nodes
+        within ``max_iter`` steps, the function returns immediately with
+        ``np.inf`` as the average.
+
+    Returns
+    -------
+    num_steps : list[int]
+        Number of steps taken in each successful simulation.
+    avg : float or np.inf
+        Mean cover time across all simulations, or ``np.inf`` if any run
+        exceeded ``max_iter``.
+    """
     
     
     isolated_nodes = _find_isolated_nodes(G=G)    
@@ -75,16 +136,51 @@ def cover_time(G: nx.Graph, n_simulations: int, seed: int = None, max_iter: int 
     return num_steps, np.average(num_steps)
             
         
-def mixing_time(G: nx.Graph, 
-                n_simulations: int, 
-                seed: int | None = None, 
-                tol: float = 1e-5, 
+def mixing_time(G: nx.Graph,
+                n_simulations: int,
+                seed: int | None = None,
+                tol: float = 1e-5,
                 max_iter: int = 10000
 ) -> tuple[dict[int, dict[str, int | npt.NDArray[np.float64]]], float]:
-    
-    """Calculate average steps until convergence to the stationary distribution.
-    Returns:
-        tuple[int, dict[int, float]]: Number of steps to converge and the stationary distribution found.
+    """Estimate the mixing time of ``G`` by iterated matrix–vector products.
+
+    The **mixing time** measures how many steps a random walk needs before its
+    probability distribution is indistinguishable (within tolerance
+    $\\varepsilon$) from the stationary distribution
+
+    $$\\pi(v) = \\frac{\\deg(v)}{2|E|}$$
+
+    Convergence is tracked via the $\\ell^\\infty$ norm between consecutive
+    distributions:
+
+    $$t_{\\mathrm{mix}} = \\min\\bigl\\{t : \\|\\mathbf{p}_t - \\mathbf{p}_{t+1}\\|_{\\infty} < \\varepsilon \\bigr\\}$$
+
+    Each simulation starts from a different random initial distribution
+    $\\mathbf{p}_0$ (drawn uniformly and normalised).
+
+    Parameters
+    ----------
+    G : networkx.Graph
+        Graph whose mixing time is to be estimated.
+    n_simulations : int
+        Number of independent runs (each uses a fresh random $\\mathbf{p}_0$).
+    seed : int, optional
+        Seed for :func:`numpy.random.seed` (``seed=0`` is supported).
+    tol : float, default 1e-5
+        Convergence tolerance $\\varepsilon$ for the $\\ell^\\infty$ norm.
+    max_iter : int, default 10 000
+        Maximum number of matrix–vector multiplications per simulation.
+
+    Returns
+    -------
+    out_dic : dict[int, dict]
+        Keyed by simulation index ``0 … n_simulations-1``.  Each entry is a
+        dict with:
+
+        - ``"iters"`` — number of iterations until convergence.
+        - ``"distribution"`` — final probability vector, shape ``(N,)``.
+    time_avg : float
+        Average number of iterations across all converged simulations.
     """
     P_mat, dim = build_transition_matrix(G=G)
     
@@ -121,7 +217,28 @@ def mixing_time(G: nx.Graph,
 
 
 def build_transition_matrix(G: nx.Graph) -> tuple[npt.NDArray[np.float64], int]:
-    """Calculate the transition matrix of the given graph."""
+    """Build the column-stochastic transition matrix for a random walk on ``G``.
+
+    Entry $P_{ij}$ is the probability of moving **from** node $j$ **to**
+    node $i$ in one step:
+
+    $$P_{ij} = \\begin{cases} 1/\\deg(j) & (i,j)\\in E \\\\ 0 & \\text{otherwise} \\end{cases}$$
+
+    For a $k$-regular graph the stationary distribution is uniform:
+    $\\pi(v) = 1/N$.
+
+    Parameters
+    ----------
+    G : networkx.Graph
+        An undirected, unweighted graph on $N$ nodes.
+
+    Returns
+    -------
+    P_mat : numpy.ndarray, shape (N, N)
+        Column-stochastic transition matrix.
+    dim : int
+        Number of nodes $N$.
+    """
 
     dim = G.number_of_nodes()
     P_mat = np.zeros((dim, dim), dtype=float)
@@ -140,8 +257,16 @@ def build_transition_matrix(G: nx.Graph) -> tuple[npt.NDArray[np.float64], int]:
 
 # ============================= Plots =============================
 def plot_cover_time(steps_by_sim: list[int], name_graph: str = None):
-    """Plots histogram of a given list of integers, representing the number of steps required for 
-    the n-th simulation to have visited, at least once, all nodes of a graph"""
+    """Plot a histogram of cover-time simulation results.
+
+    Parameters
+    ----------
+    steps_by_sim : list[int]
+        Raw output from :func:`cover_time` — number of steps for each
+        successful simulation run.
+    name_graph : str, optional
+        Graph name used in the plot title.
+    """
     
     steps_arr = np.array(steps_by_sim)
     vals_unique = np.unique(steps_arr, sorted=True)
@@ -164,7 +289,17 @@ def plot_cover_time(steps_by_sim: list[int], name_graph: str = None):
     plt.show()
         
 def plot_mixing_time_distribution(prob_distribution: npt.NDArray[np.float64], name_graph: str = None):
-    """Receive one probability distribution or several distributions from different simulations."""
+    """Plot the stationary-distribution estimate from a mixing-time run.
+
+    Parameters
+    ----------
+    prob_distribution : numpy.ndarray
+        Either a 1-D array of length $N$ (single distribution) or a 2-D array
+        of shape ``(n_simulations, N)`` (one distribution per simulation).  In
+        the latter case the distributions are averaged before plotting.
+    name_graph : str, optional
+        Graph name used in the plot title.
+    """
     
     if not isinstance(prob_distribution[0], np.float64):
         prob_distribution = np.average(prob_distribution, axis=0) # average across simulations

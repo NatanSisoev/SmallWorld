@@ -130,6 +130,6 @@ the three graph types for any choice of parameters.
 <iframe
   src="../examples/compare_times.html"
   width="100%"
-  height="720"
+  height="520"
   style="border: 1px solid #ddd; border-radius: 4px; overflow: hidden;">
 </iframe>
