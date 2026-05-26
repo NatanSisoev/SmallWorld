@@ -10,17 +10,23 @@ call this script automatically before serving/building.
 Outputs
 -------
 ``docs/examples/ring.html``
-    Regular ring lattice – static pyvis view.
+    Regular ring lattice - static pyvis view.
 ``docs/examples/er.html``
-    Erdős–Rényi graph – static pyvis view.
+    Erdos-Renyi graph - static pyvis view.
 ``docs/examples/ws.html``
-    Watts–Strogatz graph – static pyvis view.
+    Watts-Strogatz graph - static pyvis view.
 ``docs/examples/walk_ring.html``
     Ring lattice with interactive random-walk controls.
 ``docs/examples/walk_er.html``
-    Erdős–Rényi graph with interactive random-walk controls.
+    Erdos-Renyi graph with interactive random-walk controls.
 ``docs/examples/walk_ws.html``
-    Watts–Strogatz graph with interactive random-walk controls.
+    Watts-Strogatz graph with interactive random-walk controls.
+``docs/examples/cover_ring.html``
+    Ring lattice - interactive cover-time histogram.
+``docs/examples/cover_er.html``
+    Erdos-Renyi - interactive cover-time histogram.
+``docs/examples/cover_ws.html``
+    Watts-Strogatz - interactive cover-time histogram.
 ``docs/examples/compare_times.html``
     Side-by-side cover-time and mixing-time comparison (Ring / WS / ER).
 """
@@ -52,7 +58,7 @@ OUT_DIR = ROOT / "docs" / "examples"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # ── build networks ────────────────────────────────────────────────────────────
-print("Building networks  (N={}, k={}, β={})…".format(N, K, BETA))
+print(f"Building networks  (N={N}, k={K}, beta={BETA}) ...")
 graphs = build_all(N, K, beta=BETA, seed=SEED)
 
 # ── static pyvis views ────────────────────────────────────────────────────────
@@ -62,13 +68,13 @@ for name, G in graphs.items():
     layout = STATIC_LAYOUTS[name]
     net    = to_pyvis(G, layout=layout, seed=SEED, physics=True)
     dest   = save_pyvis(net, OUT_DIR / f"{name}.html")
-    print(f"  ✓ {dest.relative_to(ROOT)}")
+    print(f"  [ok] {dest.relative_to(ROOT)}")
 
 # ── interactive walk views ────────────────────────────────────────────────────
 WALK_CFG = {
-    "ring": {"layout": "circular", "title": "Ring lattice – random walk"},
-    "er":   {"layout": "spring",   "title": "Erdős–Rényi – random walk"},
-    "ws":   {"layout": "circular", "title": "Watts–Strogatz – random walk"},
+    "ring": {"layout": "circular", "title": "Ring lattice - random walk"},
+    "er":   {"layout": "spring",   "title": "Erdos-Renyi - random walk"},
+    "ws":   {"layout": "circular", "title": "Watts-Strogatz - random walk"},
 }
 
 for name, G in graphs.items():
@@ -81,13 +87,13 @@ for name, G in graphs.items():
         seed=SEED,
         title=cfg["title"],
     )
-    print(f"  ✓ {dest.relative_to(ROOT)}")
+    print(f"  [ok] {dest.relative_to(ROOT)}")
 
 # ── cover-time simulation views ───────────────────────────────────────────────
 COVER_CFG = {
-    "ring": {"title": "Ring lattice – cover time"},
-    "er":   {"title": "Erdős–Rényi – cover time"},
-    "ws":   {"title": "Watts–Strogatz (β=0.1) – cover time"},
+    "ring": {"title": "Ring lattice - cover time"},
+    "er":   {"title": "Erdos-Renyi - cover time"},
+    "ws":   {"title": "Watts-Strogatz (beta=0.1) - cover time"},
 }
 
 for name, G in graphs.items():
@@ -97,13 +103,13 @@ for name, G in graphs.items():
         OUT_DIR / f"cover_{name}.html",
         title=cfg["title"],
     )
-    print(f"  ✓ {dest.relative_to(ROOT)}")
+    print(f"  [ok] {dest.relative_to(ROOT)}")
 
 # ── compare-times page (Ring / WS / ER side-by-side) ────────────────────────
 dest = save_compare_times_visualization(
     OUT_DIR / "compare_times.html",
     N=N, k=K, beta=BETA,
 )
-print(f"  ✓ {dest.relative_to(ROOT)}")
+print(f"  [ok] {dest.relative_to(ROOT)}")
 
-print("Done.  All HTML files written to", OUT_DIR.relative_to(ROOT))
+print(f"Done.  All HTML files written to {OUT_DIR.relative_to(ROOT)}")

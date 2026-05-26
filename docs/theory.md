@@ -16,6 +16,10 @@ The Watts–Strogatz model interpolates between the two extremes. The
 random-graph length but $C$ is still close to the lattice value —
 sits around $\beta \in [10^{-2}, 10^{-1}]$.
 
+!!! example "Try it"
+    Drag, zoom, and hover each network interactively →
+    [Explore → The three networks](explore.md#the-three-networks)
+
 ## The two metrics
 
 ### Average path length
@@ -60,6 +64,10 @@ shortcut shortens many pairwise distances at once but destroys only a
 few triangles locally — that's why the two collapse on different
 scales.
 
+!!! example "Try it"
+    Sweep $\beta$ and watch $L$ and $C$ evolve in real time →
+    [Explore → Side-by-side: effect of β](explore.md#side-by-side-effect-of-beta)
+
 ## Random walks
 
 The simple random walk on $G$ is a Markov chain with transition matrix
@@ -77,6 +85,10 @@ $$
 
 which reduces to the uniform distribution when every node has the same
 degree (exactly for the ring lattice, approximately for Watts–Strogatz).
+
+!!! example "Try it"
+    Watch a walker traverse all three networks step by step →
+    [Explore → Random walk](explore.md#random-walk)
 
 ### Characteristic times
 
@@ -98,6 +110,11 @@ small spectral gap implies slow mixing.
 The take-home result: the small-world network has **both** times
 dramatically smaller than the ring lattice. A handful of random
 shortcuts is enough to make diffusion fast.
+
+!!! example "Try it"
+    Run Monte-Carlo cover-time and mixing-time simulations →
+    [Explore → Cover time](explore.md#cover-time) ·
+    [Explore → Side-by-side: effect of β](explore.md#side-by-side-effect-of-beta)
 
 ## References
 

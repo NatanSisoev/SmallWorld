@@ -27,6 +27,7 @@ time** and **mixing time**.
 
 !!! tip "Where to start"
     - Curious about the math? → [Theory](theory.md)
+    - Want to see it in action? → [Explore](explore.md)
     - Looking for a function? → [API Reference](api/networks.md)
     - Want to run the experiments? → see *Getting started* below.
 

@@ -1,14 +1,18 @@
 """Plotting helpers for the small-world study.
 
-Two visualisation modes are exposed:
+Static and interactive visualisation:
 
-* :func:`draw_networks_grid` — static side-by-side matplotlib figure,
-  one subplot per network. Used for the report figures.
-* :func:`to_pyvis` — interactive HTML rendering via :mod:`pyvis`. Useful
-  for exploration: nodes are draggable and the graph can be zoomed.
+* :func:`draw_networks_grid` — side-by-side matplotlib figure, one subplot
+  per network.  Used for report figures.
+* :func:`to_pyvis` / :func:`save_pyvis` — interactive HTML rendering via
+  :mod:`pyvis`.
+* :func:`plot_cover_time` — histogram of Monte-Carlo cover-time results.
+* :func:`plot_mixing_time_distribution` — bar chart of the stationary
+  distribution estimated by :func:`~src.smallworld.simulation.mixing_time`.
 
-Both helpers expect the ``{"ring", "er", "ws"}`` naming convention used
-by :func:`src.networks.build_all`, but accept any string keys.
+All grid/pyvis helpers accept the ``{"ring", "er", "ws"}`` naming convention
+used by :func:`~src.smallworld.networks.build_all`, but work with any string
+keys.
 """
 
 from __future__ import annotations
@@ -18,9 +22,17 @@ from typing import Mapping
 
 import matplotlib.pyplot as plt
 import networkx as nx
+import numpy as np
+import numpy.typing as npt
 from matplotlib.figure import Figure
 
-__all__ = ["draw_networks_grid", "to_pyvis", "save_pyvis"]
+__all__ = [
+    "draw_networks_grid",
+    "to_pyvis",
+    "save_pyvis",
+    "plot_cover_time",
+    "plot_mixing_time_distribution",
+]
 
 
 _DEFAULT_LAYOUTS: dict[str, str] = {
@@ -157,9 +169,15 @@ def to_pyvis(
 def save_pyvis(net, path: str | Path) -> Path:
     """Write a pyvis network to disk as UTF-8 HTML.
 
-    Works around a Windows-specific bug where :meth:`Network.save_graph`
-    opens the output file with the system encoding (``cp1252``) and
-    crashes on non-Latin-1 characters embedded in the bundled JavaScript.
+    Applies two fixes on top of the raw pyvis output:
+
+    1. **Encoding** — pyvis's :meth:`Network.save_graph` opens the file
+       with the system encoding (``cp1252`` on Windows) and crashes on
+       non-Latin-1 characters in the bundled JavaScript.  We call
+       :meth:`Network.generate_html` and write with explicit UTF-8.
+    2. **Iframe compatibility** — injects a minimal CSS reset so the
+       graph fills its ``<iframe>`` container without scrollbars, rather
+       than overflowing at the hardcoded ``height: 600px`` default.
 
     Parameters
     ----------
@@ -173,8 +191,18 @@ def save_pyvis(net, path: str | Path) -> Path:
     Path
         The path the file was written to.
     """
+    # CSS injected just before </head> so it overrides pyvis's own rules.
+    _IFRAME_CSS = (
+        "<style>"
+        "html,body{margin:0;padding:0;height:100%;overflow:hidden;}"
+        "div.card{height:100%;margin:0;border:0;padding:0;}"
+        "#mynetwork{height:100%!important;border:0!important;}"
+        "</style>"
+    )
+    html = net.generate_html()
+    html = html.replace("</head>", _IFRAME_CSS + "\n</head>", 1)
     path = Path(path)
-    path.write_text(net.generate_html(), encoding="utf-8")
+    path.write_text(html, encoding="utf-8")
     return path
 
 
@@ -187,3 +215,96 @@ def _layout(
     if kind == "spring":
         return nx.spring_layout(G, seed=seed, scale=scale)
     raise ValueError(f"Unknown layout {kind!r}; use 'circular' or 'spring'.")
+
+
+# ---------------------------------------------------------------------------
+# Simulation result plots
+# ---------------------------------------------------------------------------
+
+def plot_cover_time(
+    steps_by_sim: list[int],
+    name_graph: str | None = None,
+    *,
+    ax: plt.Axes | None = None,
+) -> plt.Figure:
+    """Plot a histogram of cover-time simulation results.
+
+    Parameters
+    ----------
+    steps_by_sim : list[int]
+        Raw output from :func:`~src.smallworld.simulation.cover_time` —
+        number of steps for each simulation run.
+    name_graph : str, optional
+        Graph name used in the plot title.
+    ax : matplotlib.axes.Axes, optional
+        Axes to draw on.  A new figure is created when ``None``.
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+        The figure object.
+    """
+    steps_arr = np.asarray(steps_by_sim)
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(10, 6))
+    else:
+        fig = ax.get_figure()
+
+    n_bins = max(1, len(np.unique(steps_arr)))
+    ax.hist(steps_arr, bins=n_bins, color="skyblue", edgecolor="black")
+    ax.set_xlabel("Number of steps")
+    ax.set_ylabel("Frequency")
+    title = f"Cover Time — {name_graph}" if name_graph else "Cover Time"
+    ax.set_title(title, fontsize=14, fontweight="bold")
+    ax.grid(axis="y", linestyle="--", alpha=0.4)
+    fig.tight_layout()
+    return fig
+
+
+def plot_mixing_time_distribution(
+    prob_distribution: npt.ArrayLike,
+    name_graph: str | None = None,
+    *,
+    ax: plt.Axes | None = None,
+) -> plt.Figure:
+    """Plot the stationary-distribution estimate from a mixing-time run.
+
+    Parameters
+    ----------
+    prob_distribution : array-like
+        Either a 1-D array of length *N* (single distribution) or a 2-D
+        array of shape ``(n_simulations, N)`` — distributions are averaged
+        before plotting in the latter case.
+    name_graph : str, optional
+        Graph name used in the plot title.
+    ax : matplotlib.axes.Axes, optional
+        Axes to draw on.  A new figure is created when ``None``.
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+        The figure object.
+    """
+    dist = np.asarray(prob_distribution, dtype=float)
+    if dist.ndim == 2:
+        dist = dist.mean(axis=0)
+
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(8, 4.5))
+    else:
+        fig = ax.get_figure()
+
+    x = np.arange(len(dist))
+    ax.bar(x, dist, width=0.75, edgecolor="black", linewidth=0.8, alpha=0.85)
+    ax.set_xlabel("Node", fontsize=12)
+    ax.set_ylabel(r"$P(X = i)$", fontsize=12)
+    title = (
+        f"Stationary Distribution — {name_graph}" if name_graph
+        else "Stationary Distribution"
+    )
+    ax.set_title(title, fontsize=14, fontweight="bold")
+    ax.set_xticks(x)
+    ax.set_ylim(0, dist.max() * 1.15)
+    ax.grid(axis="y", linestyle="--", alpha=0.4)
+    fig.tight_layout()
+    return fig

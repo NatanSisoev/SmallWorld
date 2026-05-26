@@ -1,21 +1,46 @@
-"""SmallWorld - library code for the small-world course project.
+"""SmallWorld — course project for Modelització i Simulació (MatCAD, UAB).
 
-The construction algorithms (ring, ER, WS) are written by hand;
-:class:`networkx.Graph` is used only as the underlying container so
-visualisation and standard graph utilities keep working.
+Implements the Watts-Strogatz small-world network model from scratch.
+:class:`networkx.Graph` is used only as a container; every algorithmic
+step (construction, metrics, random walks) is written by hand.
 
 Submodules
 ----------
-* :mod:`src.smallworld.networks`    - by-hand graph builders.
-* :mod:`src.smallworld.networks_nx` - reference implementation using
-  NetworkX's own constructors, kept for equivalence testing.
-* :mod:`src.smallworld.plotting`    - visualisation helpers, both static
-  (matplotlib) and interactive (pyvis).
-
-Forthcoming: :mod:`metrics` (hand-written L and C) and :mod:`walks`
-(random-walk simulation, cover time, mixing time).
+networks
+    By-hand graph builders: ring, Erdős-Rényi, Watts-Strogatz.
+networks_nx
+    Reference implementation (delegates to NetworkX) kept for equivalence
+    testing.
+plotting
+    Static matplotlib figures and interactive pyvis HTML views; also
+    cover-time and mixing-time result plots.
+simulation
+    Random-walk primitives, stationary distribution, transition matrix,
+    cover-time and mixing-time estimators.
+visualization
+    Self-contained HTML pages (vis.js) for interactive walk and
+    cover-time / mixing-time exploration; loaded from ``templates/``.
 """
 
 from src.smallworld.networks import build_all, build_er, build_ring, build_ws
+from src.smallworld.simulation import (
+    cover_time,
+    mixing_time,
+    random_walk,
+    random_walk_step,
+    stationary_distribution,
+)
 
-__all__ = ["build_all", "build_er", "build_ring", "build_ws"]
+__all__ = [
+    # network builders
+    "build_all",
+    "build_er",
+    "build_ring",
+    "build_ws",
+    # simulation
+    "cover_time",
+    "mixing_time",
+    "random_walk",
+    "random_walk_step",
+    "stationary_distribution",
+]
