@@ -21,6 +21,8 @@ Outputs
     Erdős–Rényi graph with interactive random-walk controls.
 ``docs/examples/walk_ws.html``
     Watts–Strogatz graph with interactive random-walk controls.
+``docs/examples/compare_times.html``
+    Side-by-side cover-time and mixing-time comparison (Ring / WS / ER).
 """
 
 from __future__ import annotations
@@ -34,7 +36,11 @@ sys.path.insert(0, str(ROOT))
 
 from src.smallworld.networks import build_all
 from src.smallworld.plotting import to_pyvis, save_pyvis
-from src.smallworld.visualization import save_walk_visualization, save_cover_time_visualization
+from src.smallworld.visualization import (
+    save_walk_visualization,
+    save_cover_time_visualization,
+    save_compare_times_visualization,
+)
 
 # ── parameters ────────────────────────────────────────────────────────────────
 N    = 30
@@ -92,5 +98,12 @@ for name, G in graphs.items():
         title=cfg["title"],
     )
     print(f"  ✓ {dest.relative_to(ROOT)}")
+
+# ── compare-times page (Ring / WS / ER side-by-side) ────────────────────────
+dest = save_compare_times_visualization(
+    OUT_DIR / "compare_times.html",
+    N=N, k=K, beta=BETA,
+)
+print(f"  ✓ {dest.relative_to(ROOT)}")
 
 print("Done.  All HTML files written to", OUT_DIR.relative_to(ROOT))

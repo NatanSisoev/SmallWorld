@@ -30,7 +30,9 @@ Clicking any node in the graph re-starts the walk from that node.
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
+from string import Template
 
 import networkx as nx
 
@@ -41,6 +43,8 @@ __all__ = [
     "save_walk_visualization",
     "build_cover_time_visualization",
     "save_cover_time_visualization",
+    "build_compare_times_visualization",
+    "save_compare_times_visualization",
 ]
 
 
@@ -788,3 +792,723 @@ document.getElementById('run-btn').addEventListener('click', () => {{
 </body>
 </html>
 """
+
+
+# ---------------------------------------------------------------------------
+# Compare-times visualisation (Ring vs WS vs ER — cover time + mixing time)
+# ---------------------------------------------------------------------------
+
+def build_compare_times_visualization(
+    *,
+    N: int = 30,
+    k: int = 4,
+    beta: float = 0.1,
+) -> str:
+    """Generate the interactive comparison page (Ring / WS / ER).
+
+    The page builds all three graphs entirely in JavaScript and lets the user
+    run animated cover-time walks and mixing-time simulations side by side.
+    No server or NetworkX graph is required — everything is self-contained.
+
+    Parameters
+    ----------
+    N : int, default 30
+        Initial number of nodes shown in the UI slider.
+    k : int, default 4
+        Initial mean degree shown in the UI slider.
+    beta : float, default 0.1
+        Initial Watts–Strogatz rewiring probability (must be in ``(0, 1]``).
+
+    Returns
+    -------
+    str
+        A complete, UTF-8 HTML document ready to be saved or embedded.
+    """
+    beta = max(1e-4, min(1.0, beta))
+    return _COMPARE_TIMES_TEMPLATE.substitute(
+        N=N,
+        k=k,
+        beta_log10=f"{math.log10(beta):.4f}",
+        beta_str=f"{beta:.3f}",
+    )
+
+
+def save_compare_times_visualization(
+    path: str | Path,
+    *,
+    N: int = 30,
+    k: int = 4,
+    beta: float = 0.1,
+) -> Path:
+    """Write the compare-times visualisation HTML to *path*.
+
+    Parameters
+    ----------
+    path : str or Path
+        Destination ``.html`` file.
+    N, k, beta
+        Forwarded to :func:`build_compare_times_visualization`.
+
+    Returns
+    -------
+    Path
+        The path the file was written to.
+    """
+    path = Path(path)
+    path.write_text(
+        build_compare_times_visualization(N=N, k=k, beta=beta),
+        encoding="utf-8",
+    )
+    return path
+
+
+# ``string.Template`` is used here (instead of str.format) so that the
+# JavaScript curly-braces do not need to be doubled.  Only the five
+# ``$placeholder`` tokens are substituted; everything else is literal.
+_COMPARE_TIMES_TEMPLATE = Template("""\
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Watts–Strogatz Explorer – SmallWorld</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: sans-serif;
+  font-size: 12px;
+  background: #f0f2f5;
+  color: #222;
+  padding: 8px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: hidden;
+}
+
+/* ── Controls ───────────────────────────────────────────────────── */
+#controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 7px 12px;
+  height: 42px;
+  flex-shrink: 0;
+}
+.cg { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+label { font-size: 11px; color: #555; }
+input[type=number] {
+  width: 52px; padding: 2px 4px;
+  border: 1px solid #bbb; border-radius: 3px; font-size: 11px;
+}
+input[type=range] { width: 120px; cursor: pointer; accent-color: #1565C0; }
+#beta-badge {
+  font-size: 12px; font-weight: 700;
+  background: #e8f0fe; color: #1a56db;
+  border-radius: 3px; padding: 1px 6px; min-width: 44px; text-align: center;
+}
+select {
+  padding: 2px 4px; border: 1px solid #bbb; border-radius: 3px; font-size: 11px; cursor: pointer;
+}
+
+/* ── Node-colour legend ───────────────────────────────────────────────── */
+#legend {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  font-size: 10px;
+  color: #666;
+  height: 16px;
+  align-items: center;
+  flex-shrink: 0;
+}
+#legend span { display: flex; align-items: center; gap: 3px; }
+.dot {
+  display: inline-block; width: 10px; height: 10px;
+  border-radius: 50%; flex-shrink: 0;
+}
+
+/* ── Three panels ───────────────────────────────────────────────────── */
+#panels {
+  display: flex;
+  gap: 7px;
+  flex: 1;
+  min-height: 0;
+}
+
+.panel {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* header */
+.ph {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #eee;
+  flex-shrink: 0;
+  height: 26px;
+}
+.ph-name { font-size: 11px; font-weight: 700; }
+.ph-tick { font-size: 15px; color: #2e7d32; display: none; line-height: 1; }
+.ph-tick.show { display: block; }
+
+/* network canvas */
+canvas.nc {
+  display: block;
+  width: 100%;
+  flex: 1;
+}
+
+/* status row */
+.ps {
+  padding: 3px 8px;
+  font-size: 10px;
+  color: #666;
+  background: #fafafa;
+  border-top: 1px solid #eee;
+  text-align: center;
+  flex-shrink: 0;
+  height: 22px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* distribution section */
+.dist {
+  border-top: 1px solid #eee;
+  flex-shrink: 0;
+  height: 75px;
+  display: flex;
+  flex-direction: column;
+  padding: 3px 5px 4px;
+}
+.dist-lbl {
+  font-size: 9px;
+  color: #aaa;
+  text-align: center;
+  flex-shrink: 0;
+  height: 12px;
+  line-height: 12px;
+}
+canvas.dc {
+  display: block;
+  width: 100%;
+  flex: 1;
+}
+
+/* ── Run bar ──────────────────────────────────────────────────────────────── */
+#run-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+}
+button {
+  padding: 5px 12px; border: none; border-radius: 4px;
+  cursor: pointer; font-size: 11px; font-weight: 600; color: #fff;
+  transition: filter .12s; white-space: nowrap; flex-shrink: 0;
+}
+button:hover   { filter: brightness(0.87); }
+button:active  { filter: brightness(0.74); }
+button:disabled { opacity: .35; cursor: not-allowed; filter: none; }
+#btn-cover  { background: #1565C0; }
+#btn-mixing { background: #6A1B9A; }
+#btn-reset  { background: #546E7A; font-size: 10px; padding: 4px 9px; }
+
+#statusbar { font-size: 10px; color: #888; font-style: italic; flex: 1; min-width: 0; }
+
+/* ── Progress strip ──────────────────────────────────────────────────── */
+#pgwrap { height: 3px; background: #e0e0e0; border-radius: 2px; overflow: hidden; flex-shrink: 0; }
+#pgfill { height: 100%; background: #1565C0; width: 0%; transition: width .2s; }
+</style>
+</head>
+<body>
+
+<!-- ── Controls ────────────────────────────────────────────────────────────────── -->
+<div id="controls">
+  <div class="cg"><label>N =</label><input type="number" id="inp-N" value="$N" min="10" max="50"></div>
+  <div class="cg"><label>k =</label><input type="number" id="inp-k" value="$k" min="2" max="10" step="2"></div>
+  <div class="cg">
+    <label>β =</label>
+    <input type="range" id="inp-beta" min="-3" max="0" step="0.04" value="$beta_log10">
+    <span id="beta-badge">$beta_str</span>
+  </div>
+  <div class="cg">
+    <label>Speed:</label>
+    <select id="inp-speed">
+      <option value="3">Slow</option>
+      <option value="10" selected>Normal</option>
+      <option value="40">Fast</option>
+      <option value="99999">Instant</option>
+    </select>
+  </div>
+</div>
+
+<!-- ── Legend ────────────────────────────────────────────────────────────────────── -->
+<div id="legend">
+  <span><span class="dot" style="background:#4CAF50;outline:1.5px solid #1B5E20"></span>Start</span>
+  <span><span class="dot" style="background:#FF4444;outline:1.5px solid #C62828"></span>Current</span>
+  <span><span class="dot" style="background:#FF9800;outline:1.5px solid #E65100"></span>Visited</span>
+  <span><span class="dot" style="background:#97C2FC;outline:1.5px solid #2B7CE9"></span>Unvisited</span>
+  <span style="margin-left:6px"><span class="dot" style="background:#f47c2e;border-radius:0;height:2px;width:14px"></span> shortcut</span>
+</div>
+
+<!-- ── Three panels ──────────────────────────────────────────────────────────────────── -->
+<div id="panels">
+
+  <!-- Ring -->
+  <div class="panel">
+    <div class="ph">
+      <span class="ph-name" style="color:#c62828">Ring lattice &thinsp;(β = 0)</span>
+      <span class="ph-tick" id="tk-ring">✓</span>
+    </div>
+    <canvas class="nc" id="cv-ring"></canvas>
+    <div class="ps" id="st-ring">L = — &nbsp;·  C = —</div>
+    <div class="dist">
+      <div class="dist-lbl" id="dl-ring">stationary distribution π(node) — run Mixing Time</div>
+      <canvas class="dc" id="dv-ring"></canvas>
+    </div>
+  </div>
+
+  <!-- WS -->
+  <div class="panel">
+    <div class="ph">
+      <span class="ph-name" id="ws-hdr" style="color:#1565C0">Watts–Strogatz &thinsp;(β = $beta_str)</span>
+      <span class="ph-tick" id="tk-ws">✓</span>
+    </div>
+    <canvas class="nc" id="cv-ws"></canvas>
+    <div class="ps" id="st-ws">L = — &nbsp;·  C = —</div>
+    <div class="dist">
+      <div class="dist-lbl" id="dl-ws">stationary distribution π(node) — run Mixing Time</div>
+      <canvas class="dc" id="dv-ws"></canvas>
+    </div>
+  </div>
+
+  <!-- ER -->
+  <div class="panel">
+    <div class="ph">
+      <span class="ph-name" style="color:#2e7d32">Erdős–Rényi &thinsp;(p = k/(N−1))</span>
+      <span class="ph-tick" id="tk-er">✓</span>
+    </div>
+    <canvas class="nc" id="cv-er"></canvas>
+    <div class="ps" id="st-er">L = — &nbsp;·  C = —</div>
+    <div class="dist">
+      <div class="dist-lbl" id="dl-er">stationary distribution π(node) — run Mixing Time</div>
+      <canvas class="dc" id="dv-er"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Run bar ────────────────────────────────────────────────────────────────────── -->
+<div id="run-bar">
+  <button id="btn-cover">▶ Cover Time</button>
+  <button id="btn-mixing">▶ Mixing Time</button>
+  <button id="btn-reset">↺ Reset</button>
+  <span id="statusbar">Adjust β — the graph updates live. Then run a simulation.</span>
+</div>
+<div id="pgwrap"><div id="pgfill"></div></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════
+// Constants & state
+// ═══════════════════════════════════════════════════════════════════════
+const NAMES = ['ring', 'ws', 'er'];
+const COL   = { ring: '#c62828', ws: '#1565C0', er: '#2e7d32' };
+
+let graphs   = {};
+let walkers  = {};
+let animTmr  = null;
+let isRunning = false;
+
+// ═══════════════════════════════════════════════════════════════════════
+// Seeded PRNG
+// ═══════════════════════════════════════════════════════════════════════
+function mkRng(seed) {
+  let s = (seed || 1) >>> 0;
+  return () => { s ^= s<<13; s ^= s>>>17; s ^= s<<5; return (s>>>0)/0x100000000; };
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Graph builders
+// ═══════════════════════════════════════════════════════════════════════
+function buildRing(N, k) {
+  const adj = Array.from({length:N}, ()=>new Set()), h = k>>1;
+  for (let i=0;i<N;i++) for (let d=1;d<=h;d++) { const j=(i+d)%N; adj[i].add(j); adj[j].add(i); }
+  return { adj: adj.map(s=>[...s]), shortcuts: new Set() };
+}
+
+function buildER(N, k, rng) {
+  const p = k/(N-1), adj = Array.from({length:N}, ()=>new Set());
+  for (let i=0;i<N;i++) for (let j=i+1;j<N;j++) if (rng()<p) { adj[i].add(j); adj[j].add(i); }
+  return { adj: adj.map(s=>[...s]), shortcuts: null };
+}
+
+function buildWS(N, k, beta, rng) {
+  const adj = Array.from({length:N}, ()=>new Set()), h = k>>1;
+  for (let i=0;i<N;i++) for (let d=1;d<=h;d++) { const j=(i+d)%N; adj[i].add(j); adj[j].add(i); }
+  const sc = new Set();
+  for (let i=0;i<N;i++) for (let d=1;d<=h;d++) {
+    const j=(i+d)%N;
+    if (!adj[i].has(j)) continue;
+    if (rng()<beta) {
+      adj[i].delete(j); adj[j].delete(i);
+      let nj, t=0;
+      do { nj=Math.floor(rng()*N); t++; } while ((nj===i||adj[i].has(nj))&&t<N*3);
+      if (t<N*3) { adj[i].add(nj); adj[nj].add(i); sc.add(Math.min(i,nj)+','+Math.max(i,nj)); }
+      else       { adj[i].add(j);  adj[j].add(i); }
+    }
+  }
+  return { adj: adj.map(s=>[...s]), shortcuts: sc };
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Metrics
+// ═══════════════════════════════════════════════════════════════════════
+function apl(adj) {
+  const N=adj.length; let tot=0,cnt=0;
+  for (let s=0;s<N;s++) {
+    const d=new Int32Array(N).fill(-1); d[s]=0;
+    const q=[s]; let qi=0;
+    while (qi<q.length) { const u=q[qi++]; for (const v of adj[u]) if(d[v]<0){d[v]=d[u]+1;q.push(v);} }
+    for (let t=0;t<N;t++) if(t!==s&&d[t]>0){tot+=d[t];cnt++;}
+  }
+  return cnt?tot/cnt:Infinity;
+}
+
+function cc(adj) {
+  const N=adj.length, sets=adj.map(a=>new Set(a));
+  let sum=0,nodes=0;
+  for (let i=0;i<N;i++) {
+    const nb=adj[i],deg=nb.length; if(deg<2)continue;
+    let cl=0;
+    for (let a=0;a<deg;a++) for (let b=a+1;b<deg;b++) if(sets[nb[a]].has(nb[b]))cl++;
+    sum+=cl/(deg*(deg-1)/2); nodes++;
+  }
+  return nodes?sum/nodes:0;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Canvas helpers
+// ═══════════════════════════════════════════════════════════════════════
+function setupCanvas(canvas) {
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.clientWidth||200, H=canvas.clientHeight||160;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,W,H);
+  return {ctx,W,H};
+}
+
+function circPos(N,cx,cy,r) {
+  return Array.from({length:N},(_,i)=>[cx+r*Math.cos(2*Math.PI*i/N-Math.PI/2),
+                                        cy+r*Math.sin(2*Math.PI*i/N-Math.PI/2)]);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Network drawing
+// ═══════════════════════════════════════════════════════════════════════
+function drawNet(name, walkerState) {
+  const canvas=document.getElementById('cv-'+name);
+  const {ctx,W,H}=setupCanvas(canvas);
+  const {adj,shortcuts}=graphs[name];
+  const N=adj.length; if(!N)return;
+  const pad=16, r=Math.min(W,H)/2-pad;
+  const pos=circPos(N,W/2,H/2,r);
+  const nodeR=Math.max(4,Math.min(7,90/N));
+
+  // Edges
+  const loc=[], sc=[];
+  for (let i=0;i<N;i++) for (const j of adj[i]) {
+    if(j<=i)continue;
+    (shortcuts&&shortcuts.has(i+','+j)?sc:loc).push([i,j]);
+  }
+  ctx.globalAlpha=0.45; ctx.lineWidth=1; ctx.strokeStyle='#90b8e8';
+  for(const[i,j]of loc){ctx.beginPath();ctx.moveTo(...pos[i]);ctx.lineTo(...pos[j]);ctx.stroke();}
+  ctx.globalAlpha=0.9; ctx.lineWidth=2; ctx.strokeStyle='#f47c2e';
+  for(const[i,j]of sc){ctx.beginPath();ctx.moveTo(...pos[i]);ctx.lineTo(...pos[j]);ctx.stroke();}
+  ctx.globalAlpha=1;
+
+  // Nodes
+  const w=walkerState;
+  for (let i=0;i<N;i++) {
+    let fill,stroke,lw;
+    if (w&&w.current===i)                    { fill='#FF4444'; stroke='#B71C1C'; lw=1.5; }
+    else if (w&&i===w.start)                 { fill='#4CAF50'; stroke='#1B5E20'; lw=1.5; }
+    else if (w&&w.visited&&w.visited.has(i)) { fill='#FF9800'; stroke='#E65100'; lw=1; }
+    else                                     { fill='#7eb3f5'; stroke='#1a6bc4'; lw=1; }
+    ctx.fillStyle=fill; ctx.strokeStyle=stroke; ctx.lineWidth=lw;
+    ctx.beginPath(); ctx.arc(...pos[i],nodeR,0,Math.PI*2); ctx.fill(); ctx.stroke();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Distribution chart
+// ═══════════════════════════════════════════════════════════════════════
+function drawDist(name, dist, iterStr) {
+  const canvas=document.getElementById('dv-'+name);
+  const {ctx,W,H}=setupCanvas(canvas);
+  const N=dist.length;
+  const pad={t:2,r:2,b:11,l:2};
+  const cW=W-pad.l-pad.r, cH=H-pad.t-pad.b;
+  const maxV=Math.max(...dist)*1.12||1;
+  const barW=Math.max(1,cW/N-0.4);
+
+  const yu=pad.t+cH-(1/N/maxV)*cH;
+  ctx.strokeStyle='#ccc'; ctx.lineWidth=0.8; ctx.setLineDash([2,2]);
+  ctx.beginPath(); ctx.moveTo(pad.l,yu); ctx.lineTo(pad.l+cW,yu); ctx.stroke();
+  ctx.setLineDash([]);
+
+  for(let i=0;i<N;i++){
+    const bH=(dist[i]/maxV)*cH;
+    const x=pad.l+i*(cW/N), y=pad.t+cH-bH;
+    const t=dist[i]/maxV;
+    ctx.fillStyle=`hsl(210,65%,$${65-t*40}%)`;
+    ctx.fillRect(x,y,barW,bH);
+  }
+
+  ctx.strokeStyle='#ddd'; ctx.lineWidth=0.8;
+  ctx.beginPath(); ctx.moveTo(pad.l,pad.t+cH); ctx.lineTo(pad.l+cW,pad.t+cH); ctx.stroke();
+
+  ctx.fillStyle='#999'; ctx.font='8px sans-serif';
+  ctx.textAlign='left';  ctx.fillText('π(i)', pad.l, H-1);
+  ctx.textAlign='right'; ctx.fillText(iterStr, pad.l+cW, H-1);
+
+  document.getElementById('dl-'+name).textContent='stationary distribution π(node) — '+iterStr;
+  document.getElementById('dl-'+name).style.color='#555';
+}
+
+function clearDist(name) {
+  const canvas=document.getElementById('dv-'+name);
+  const {ctx,W,H}=setupCanvas(canvas);
+  ctx.fillStyle='#f8f8f8'; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='#eee'; ctx.lineWidth=0.5;
+  ctx.beginPath(); ctx.moveTo(0,H/2); ctx.lineTo(W,H/2); ctx.stroke();
+  document.getElementById('dl-'+name).textContent='stationary distribution π(node) — run Mixing Time';
+  document.getElementById('dl-'+name).style.color='#aaa';
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Build graphs & render static state
+// ═══════════════════════════════════════════════════════════════════════
+function buildAndDraw() {
+  const {N,k,beta}=getParams();
+  graphs.ring = buildRing(N, k);
+  graphs.er   = buildER(N, k, mkRng(42+N*97+k));
+  graphs.ws   = buildWS(N, k, beta, mkRng(7+N*13));
+
+  document.getElementById('ws-hdr').textContent='Watts–Strogatz  (β = '+beta.toFixed(3)+')';
+
+  NAMES.forEach(name=>{
+    drawNet(name, null);
+    const {adj}=graphs[name];
+    const L=apl(adj), C=cc(adj);
+    const sc=graphs[name].shortcuts;
+    let extra='';
+    if(name==='ws') extra='  ·  '+( sc?sc.size:0)+' shortcuts';
+    document.getElementById('st-'+name).textContent=
+      'L = '+(isFinite(L)?L.toFixed(2):'∞')+'  ·  C = '+C.toFixed(3)+extra;
+    document.getElementById('tk-'+name).classList.remove('show');
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Cover-time animation
+// ═══════════════════════════════════════════════════════════════════════
+function startCoverTime() {
+  if (isRunning) return;
+  isRunning = true; setBusy(true); clearAnim();
+  buildAndDraw();
+
+  const {N}=getParams();
+  NAMES.forEach(name=>{
+    const {adj}=graphs[name];
+    const reach=adj.map((a,i)=>a.length>0?i:-1).filter(i=>i>=0);
+    const start=reach[Math.floor(Math.random()*reach.length)];
+    walkers[name]={current:start,visited:new Set([start]),steps:0,done:false,start,reach};
+    document.getElementById('tk-'+name).classList.remove('show');
+    drawNet(name,walkers[name]);
+    document.getElementById('st-'+name).textContent='Step 0  ·  visited 1/'+reach.length;
+  });
+
+  const spt=parseInt(document.getElementById('inp-speed').value);
+
+  if (spt>=99999) {
+    NAMES.forEach(name=>{
+      const {adj}=graphs[name]; const w=walkers[name];
+      while(!w.done){
+        const nb=adj[w.current]; w.current=nb[Math.floor(Math.random()*nb.length)];
+        w.visited.add(w.current); w.steps++;
+        if(w.visited.size>=w.reach.length) w.done=true;
+      }
+      drawNet(name,w);
+      document.getElementById('tk-'+name).classList.add('show');
+      document.getElementById('st-'+name).textContent='✓ Cover time: '+w.steps+' steps';
+    });
+    setStatusBar('Cover time done (instant).');
+    isRunning=false; setBusy(false); return;
+  }
+
+  setStatusBar('Animating cover-time random walk…');
+  animTmr=setInterval(()=>{
+    let allDone=true;
+    NAMES.forEach(name=>{
+      const w=walkers[name]; if(w.done)return;
+      const {adj}=graphs[name];
+      for(let s=0;s<spt;s++){
+        if(w.done)break;
+        const nb=adj[w.current];
+        w.current=nb[Math.floor(Math.random()*nb.length)];
+        w.visited.add(w.current); w.steps++;
+        if(w.visited.size>=w.reach.length){ w.done=true; break; }
+      }
+      drawNet(name,w);
+      if(w.done){
+        document.getElementById('tk-'+name).classList.add('show');
+        document.getElementById('st-'+name).textContent='✓ Cover time: '+w.steps+' steps';
+      } else {
+        document.getElementById('st-'+name).textContent=
+          'Step '+w.steps+'  ·  visited '+w.visited.size+'/'+w.reach.length;
+      }
+      allDone=allDone&&w.done;
+    });
+    const frac=NAMES.reduce((s,n)=>{const w=walkers[n]; return s+(w.visited.size/w.reach.length);},0)/3;
+    setProgress(frac);
+    if(allDone){ clearAnim(); setStatusBar('Cover time complete.'); isRunning=false; setBusy(false); }
+  }, 50);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Mixing time
+// ═══════════════════════════════════════════════════════════════════════
+function startMixingTime() {
+  if (isRunning) return;
+  isRunning=true; setBusy(true); clearAnim();
+  buildAndDraw();
+
+  setStatusBar('Computing mixing time (matrix iteration)…');
+  setProgress(0);
+
+  let done=0;
+  NAMES.forEach((name,idx)=>{
+    setTimeout(()=>{
+      const {adj}=graphs[name];
+      const {dist,iters}=mixingTime(adj);
+      drawDist(name, dist, '~'+iters+' iters');
+      done++;
+      setProgress(done/3);
+      if(done===3){
+        setStatusBar('Mixing time done. Dashed line = uniform (1/N).');
+        isRunning=false; setBusy(false);
+      }
+    }, idx*15);
+  });
+}
+
+function mixingTime(adj) {
+  const N=adj.length;
+  const P=Array.from({length:N},()=>new Float64Array(N));
+  for(let j=0;j<N;j++){
+    const deg=adj[j].length;
+    if(deg>0) for(const i of adj[j]) P[i][j]=1/deg; else P[j][j]=1;
+  }
+  let v=new Float64Array(N),s=0;
+  for(let i=0;i<N;i++){v[i]=Math.random();s+=v[i];}
+  for(let i=0;i<N;i++)v[i]/=s;
+  const nxt=new Float64Array(N);
+  let iters=5000;
+  for(let it=0;it<5000;it++){
+    nxt.fill(0);
+    for(let i=0;i<N;i++) for(let j=0;j<N;j++) nxt[i]+=P[i][j]*v[j];
+    let d=0; for(let i=0;i<N;i++){const x=Math.abs(v[i]-nxt[i]);if(x>d)d=x;}
+    if(d<1e-5){iters=it;break;}
+    v.set(nxt);
+  }
+  return {dist:v,iters};
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Reset
+// ═══════════════════════════════════════════════════════════════════════
+function doReset() {
+  clearAnim();
+  isRunning=false; setBusy(false); setProgress(0);
+  buildAndDraw();
+  NAMES.forEach(name=>{
+    clearDist(name);
+    document.getElementById('tk-'+name).classList.remove('show');
+  });
+  setStatusBar('Reset. Adjust β — the graph updates live. Then run a simulation.');
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Helpers
+// ═══════════════════════════════════════════════════════════════════════
+function clearAnim() {
+  if(animTmr){clearInterval(animTmr);animTmr=null;}
+}
+function getParams() {
+  const N=Math.max(10,Math.min(50,parseInt(document.getElementById('inp-N').value)||$N));
+  let k=Math.max(2,Math.min(20,parseInt(document.getElementById('inp-k').value)||$k));
+  if(k%2)k--;
+  const beta=Math.pow(10,parseFloat(document.getElementById('inp-beta').value));
+  return {N,k,beta};
+}
+function setBusy(b) {
+  ['btn-cover','btn-mixing','btn-reset'].forEach(id=>{
+    document.getElementById(id).disabled=b;
+  });
+}
+function setStatusBar(msg){document.getElementById('statusbar').textContent=msg;}
+function setProgress(p){document.getElementById('pgfill').style.width=(Math.min(1,p)*100)+'%';}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Parameter change handlers
+// ═══════════════════════════════════════════════════════════════════════
+let debT=null;
+document.getElementById('inp-beta').addEventListener('input',()=>{
+  const beta=Math.pow(10,parseFloat(document.getElementById('inp-beta').value));
+  document.getElementById('beta-badge').textContent=beta.toFixed(3);
+  if(isRunning)return;
+  clearTimeout(debT); debT=setTimeout(buildAndDraw,100);
+});
+['inp-N','inp-k'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{
+  if(isRunning)return;
+  clearTimeout(debT); debT=setTimeout(buildAndDraw,80);
+}));
+
+// ═══════════════════════════════════════════════════════════════════════
+// Button wiring
+// ═══════════════════════════════════════════════════════════════════════
+document.getElementById('btn-cover').addEventListener('click', startCoverTime);
+document.getElementById('btn-mixing').addEventListener('click', startMixingTime);
+document.getElementById('btn-reset').addEventListener('click', doReset);
+
+// ═══════════════════════════════════════════════════════════════════════
+// Initial render
+// ═══════════════════════════════════════════════════════════════════════
+buildAndDraw();
+NAMES.forEach(name=>clearDist(name));
+</script>
+</body>
+</html>
+""")
