@@ -41,3 +41,41 @@ that collapse the diameter while preserving most of the local
 clustering.
 
 <iframe src="ws.html" width="100%" height="520" style="border: 1px solid #ddd; border-radius: 4px;"></iframe>
+
+---
+
+## Random walk
+
+Interactive random-walk simulation on each of the three networks.
+The walker starts at node **0** (green). Use the controls to advance
+the walk step by step or let it run automatically.
+
+**Controls:**
+
+- **▶ Step** — one step at a time.
+- **▶▶ Walk N** — jump *N* steps at once (edit the *N* field).
+- **⏵ Auto** — animated playback; edit the *ms* field to set the
+  speed (milliseconds per step). Click again to pause.
+- **↺ Reset** — restart from node 0.
+- **Click a node** — restart the walk from that node.
+
+**Colour key:** green = start · red = current · orange = visited · blue = unvisited.
+
+!!! note "How these are generated"
+    The HTML files are produced by
+    [`scripts/build_examples.py`](https://github.com/), which calls
+    `src.smallworld.networks.build_all` followed by
+    `src.smallworld.visualization.save_walk_visualization`.
+    Both `make docs` and `make docs-serve` regenerate them automatically.
+
+### Ring lattice
+
+<iframe src="walk_ring.html" width="100%" height="640" style="border: 1px solid #ddd; border-radius: 4px;"></iframe>
+
+### Erdős–Rényi
+
+<iframe src="walk_er.html" width="100%" height="640" style="border: 1px solid #ddd; border-radius: 4px;"></iframe>
+
+### Watts–Strogatz ($\beta = 0.1$)
+
+<iframe src="walk_ws.html" width="100%" height="640" style="border: 1px solid #ddd; border-radius: 4px;"></iframe>

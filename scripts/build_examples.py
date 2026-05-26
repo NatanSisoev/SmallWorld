@@ -1,9 +1,26 @@
-"""Generate the interactive pyvis HTML examples embedded in the docs.
+"""Generate all HTML example files for the MkDocs documentation.
 
-Writes one HTML file per reference network into ``docs/examples/``. The
-docs page ``docs/examples.md`` references these via ``<iframe>``.
+Run from the project root::
 
-Invoked automatically by ``make docs`` and ``make docs-serve``.
+    python scripts/build_examples.py
+
+Or via the Makefile targets ``make docs`` / ``make docs-serve``, which
+call this script automatically before serving/building.
+
+Outputs
+-------
+``docs/examples/ring.html``
+    Regular ring lattice – static pyvis view.
+``docs/examples/er.html``
+    Erdős–Rényi graph – static pyvis view.
+``docs/examples/ws.html``
+    Watts–Strogatz graph – static pyvis view.
+``docs/examples/walk_ring.html``
+    Ring lattice with interactive random-walk controls.
+``docs/examples/walk_er.html``
+    Erdős–Rényi graph with interactive random-walk controls.
+``docs/examples/walk_ws.html``
+    Watts–Strogatz graph with interactive random-walk controls.
 """
 
 from __future__ import annotations
@@ -11,22 +28,69 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+# Make sure the project root is on sys.path so ``src`` imports work.
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
 
 from src.smallworld.networks import build_all
-from src.smallworld.plotting import save_pyvis, to_pyvis
+from src.smallworld.plotting import to_pyvis, save_pyvis
+from src.smallworld.visualization import save_walk_visualization, save_cover_time_visualization
 
-OUT = ROOT / "docs" / "examples"
-OUT.mkdir(parents=True, exist_ok=True)
+# ── parameters ────────────────────────────────────────────────────────────────
+N    = 30
+K    = 4
+BETA = 0.1
+SEED = 42
 
-LAYOUTS = {"ring": "circular", "er": "spring", "ws": "circular"}
+OUT_DIR = ROOT / "docs" / "examples"
+OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-N, k, beta = 50, 10, 0.1
-graphs = build_all(N=N, k=k, beta=beta, seed=42)
+# ── build networks ────────────────────────────────────────────────────────────
+print("Building networks  (N={}, k={}, β={})…".format(N, K, BETA))
+graphs = build_all(N, K, beta=BETA, seed=SEED)
+
+# ── static pyvis views ────────────────────────────────────────────────────────
+STATIC_LAYOUTS = {"ring": "circular", "er": "spring", "ws": "circular"}
 
 for name, G in graphs.items():
-    net = to_pyvis(G, layout=LAYOUTS[name], height="500px", physics=True)
-    out = save_pyvis(net, OUT / f"{name}.html")
-    print(f"wrote {out.relative_to(ROOT)}")
+    layout = STATIC_LAYOUTS[name]
+    net    = to_pyvis(G, layout=layout, seed=SEED, physics=True)
+    dest   = save_pyvis(net, OUT_DIR / f"{name}.html")
+    print(f"  ✓ {dest.relative_to(ROOT)}")
+
+# ── interactive walk views ────────────────────────────────────────────────────
+WALK_CFG = {
+    "ring": {"layout": "circular", "title": "Ring lattice – random walk"},
+    "er":   {"layout": "spring",   "title": "Erdős–Rényi – random walk"},
+    "ws":   {"layout": "circular", "title": "Watts–Strogatz – random walk"},
+}
+
+for name, G in graphs.items():
+    cfg  = WALK_CFG[name]
+    dest = save_walk_visualization(
+        G,
+        OUT_DIR / f"walk_{name}.html",
+        start=0,
+        layout=cfg["layout"],
+        seed=SEED,
+        title=cfg["title"],
+    )
+    print(f"  ✓ {dest.relative_to(ROOT)}")
+
+# ── cover-time simulation views ───────────────────────────────────────────────
+COVER_CFG = {
+    "ring": {"title": "Ring lattice – cover time"},
+    "er":   {"title": "Erdős–Rényi – cover time"},
+    "ws":   {"title": "Watts–Strogatz (β=0.1) – cover time"},
+}
+
+for name, G in graphs.items():
+    cfg  = COVER_CFG[name]
+    dest = save_cover_time_visualization(
+        G,
+        OUT_DIR / f"cover_{name}.html",
+        title=cfg["title"],
+    )
+    print(f"  ✓ {dest.relative_to(ROOT)}")
+
+print("Done.  All HTML files written to", OUT_DIR.relative_to(ROOT))

@@ -38,9 +38,11 @@ nav:
   - Home: index.md
   - Theory: theory.md
   - Interactive examples: examples.md
+  - Simulation: simulation.md
   - API Reference:
       - Networks: api/networks.md
       - Plotting: api/plotting.md
+      - Simulation: api/simulation.md
 
 plugins:
   - search
