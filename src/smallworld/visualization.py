@@ -9,12 +9,14 @@ placeholders.  Python fills them with :func:`_render`.
 
 The main entry points are:
 
-* :func:`build_walk_visualization`         — HTML for one interactive walk.
-* :func:`save_walk_visualization`          — write it to disk.
-* :func:`build_cover_time_visualization`   — HTML for cover-time histogram.
-* :func:`save_cover_time_visualization`    — write it to disk.
-* :func:`build_compare_times_visualization`— HTML for side-by-side comparison.
-* :func:`save_compare_times_visualization` — write it to disk.
+* :func:`build_walk_visualization`              — HTML for one interactive walk.
+* :func:`save_walk_visualization`               — write it to disk.
+* :func:`build_cover_time_visualization`        — HTML for cover-time histogram.
+* :func:`save_cover_time_visualization`         — write it to disk.
+* :func:`build_compare_times_visualization`     — HTML for side-by-side comparison.
+* :func:`save_compare_times_visualization`      — write it to disk.
+* :func:`build_metrics_analytics_visualization` — HTML for the L/C vs β analytics page.
+* :func:`save_metrics_analytics_visualization`  — write it to disk.
 
 Node colour convention
 ----------------------
@@ -41,6 +43,8 @@ __all__ = [
     "save_cover_time_visualization",
     "build_compare_times_visualization",
     "save_compare_times_visualization",
+    "build_metrics_analytics_visualization",
+    "save_metrics_analytics_visualization",
 ]
 
 _TEMPLATES_DIR = Path(__file__).parent / "templates"
@@ -324,6 +328,176 @@ def save_compare_times_visualization(
     path = Path(path)
     path.write_text(
         build_compare_times_visualization(N=N, k=k, beta=beta),
+        encoding="utf-8",
+    )
+    return path
+
+
+# ---------------------------------------------------------------------------
+# Metric-analytics visualisation (L and C across β, k slider)
+# ---------------------------------------------------------------------------
+
+def _compute_metrics_data(
+    *,
+    N: int,
+    k_values: list[int],
+    betas: list[float],
+    seed: int,
+) -> dict:
+    """Pre-compute (L, C) for ring / ER / WS across every (k, β) combination.
+
+    Used internally by :func:`build_metrics_analytics_visualization`.
+
+    The clustering coefficient is :func:`networkx.transitivity`, which is
+    numerically identical to the project's :func:`coef_clusterització`
+    (verified by the unit tests) but fast enough to use at ``N = 1000``.
+    The average path length :math:`L` is computed on the largest connected
+    component when the graph is disconnected (typical for ER at small ``k``),
+    matching the convention of :func:`camí_mig`.
+
+    Parameters
+    ----------
+    N : int
+        Number of nodes.
+    k_values : list[int]
+        Even average degrees to sweep over.
+    betas : list[float]
+        Rewiring probabilities at which to evaluate Watts–Strogatz.
+    seed : int
+        Seed shared by all builders for reproducibility.
+
+    Returns
+    -------
+    dict
+        Nested mapping keyed first by ``str(k)`` (JSON-friendly), then by
+        network name (``"ring"``, ``"er"``, ``"ws"``).  For ``"ws"`` the
+        inner level is keyed by ``str(beta)`` and holds ``{"L": …, "C": …}``.
+    """
+    from src.smallworld.networks import build_er, build_ring, build_ws
+
+    def safe_apl(G: nx.Graph) -> float:
+        if not nx.is_connected(G):
+            largest = max(nx.connected_components(G), key=len)
+            G = G.subgraph(largest).copy()
+        return float(nx.average_shortest_path_length(G))
+
+    def safe_C(G: nx.Graph) -> float:
+        return float(nx.transitivity(G))
+
+    out: dict = {}
+    for k in k_values:
+        print(f"  · k = {k:3d} ... ", end="", flush=True)
+        Gr = build_ring(N, k, seed=seed)
+        Ge = build_er(N, k, seed=seed)
+        entry = {
+            "ring": {"L": safe_apl(Gr), "C": safe_C(Gr)},
+            "er":   {"L": safe_apl(Ge), "C": safe_C(Ge)},
+            "ws":   {},
+        }
+        for beta in betas:
+            Gw = build_ws(N, k, beta, seed=seed)
+            # `:g` matches JS's Number.toString format (no trailing ".0"),
+            # so the lookup in the embedded JS works for every β.
+            entry["ws"][f"{beta:g}"] = {"L": safe_apl(Gw), "C": safe_C(Gw)}
+        out[str(k)] = entry
+        print("done")
+    return out
+
+
+def build_metrics_analytics_visualization(
+    *,
+    N: int = 1000,
+    k_values: list[int] | None = None,
+    betas: list[float] | None = None,
+    k_default: int = 10,
+    seed: int = 42,
+) -> str:
+    """Generate the self-contained HTML page for the *Metric analytics* section.
+
+    Pre-computes :math:`L(\\beta)` and :math:`C(\\beta)` for the three
+    reference networks across the requested ``(k, β)`` grid and embeds the
+    table as JSON inside the page.  The browser does no metric computation,
+    so the slider stays interactive even at ``N = 1000``.
+
+    Parameters
+    ----------
+    N : int, default 1000
+        Number of nodes used for every realisation. Displayed prominently
+        in the page header so readers know the regime.
+    k_values : list[int], optional
+        Average degrees to sweep over. Must all be even (so that the ring
+        and WS builders accept them). Defaults to ``[10, 20, …, 100]``.
+    betas : list[float], optional
+        Rewiring probabilities to evaluate WS at.
+        Defaults to ``[0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]``.
+    k_default : int, default 10
+        Slider position the page opens on. Must appear in ``k_values``.
+    seed : int, default 42
+        Shared random seed for every builder, so the page is reproducible.
+
+    Returns
+    -------
+    str
+        A complete, UTF-8 HTML document ready to be saved or embedded.
+    """
+    if k_values is None:
+        k_values = list(range(10, 101, 10))
+    if betas is None:
+        betas = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0]
+
+    print(f"Building metric-analytics data  (N={N}) ...")
+    data = _compute_metrics_data(
+        N=N, k_values=k_values, betas=betas, seed=seed,
+    )
+
+    betas_pretty = ",  ".join(
+        f"{b:g}" for b in betas
+    )
+
+    return _render(
+        "metrics_analytics.html",
+        N             = N,
+        k_max_idx     = len(k_values) - 1,
+        k_default     = k_default,
+        k_values_json = json.dumps(k_values),
+        betas_json    = json.dumps(betas),
+        betas_pretty  = betas_pretty,
+        data_json     = json.dumps(data),
+    )
+
+
+def save_metrics_analytics_visualization(
+    path: str | Path,
+    *,
+    N: int = 1000,
+    k_values: list[int] | None = None,
+    betas: list[float] | None = None,
+    k_default: int = 10,
+    seed: int = 42,
+) -> Path:
+    """Write the metric-analytics visualisation HTML to *path*.
+
+    Parameters
+    ----------
+    path : str or Path
+        Destination ``.html`` file.
+    N, k_values, betas, k_default, seed
+        Forwarded to :func:`build_metrics_analytics_visualization`.
+
+    Returns
+    -------
+    Path
+        The path the file was written to.
+    """
+    path = Path(path)
+    path.write_text(
+        build_metrics_analytics_visualization(
+            N=N,
+            k_values=k_values,
+            betas=betas,
+            k_default=k_default,
+            seed=seed,
+        ),
         encoding="utf-8",
     )
     return path

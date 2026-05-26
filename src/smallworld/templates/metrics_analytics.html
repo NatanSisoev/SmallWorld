@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Metric analytics – SmallWorld</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: sans-serif;
+  font-size: 12px;
+  background: #f0f2f5;
+  color: #222;
+  padding: 8px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: hidden;
+}
+
+/* ── Header / controls ──────────────────────────────────────────────── */
+#controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 7px 12px;
+  flex-shrink: 0;
+  height: 44px;
+}
+.cg { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+label { font-size: 11px; color: #555; }
+#n-badge {
+  font-size: 11px; font-weight: 700;
+  background: #eef2ff; color: #3730a3;
+  border-radius: 3px; padding: 2px 7px;
+}
+#k-badge {
+  font-size: 12px; font-weight: 700;
+  background: #e8f0fe; color: #1a56db;
+  border-radius: 3px; padding: 2px 7px; min-width: 36px; text-align: center;
+}
+input[type=range] { width: 220px; cursor: pointer; accent-color: #1565C0; }
+#k-ticks {
+  display: flex;
+  justify-content: space-between;
+  width: 220px;
+  font-size: 9px;
+  color: #999;
+  margin-top: -2px;
+}
+
+/* ── Legend ─────────────────────────────────────────────────────────── */
+#legend {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  font-size: 11px;
+  color: #555;
+  flex-shrink: 0;
+  height: 18px;
+  align-items: center;
+}
+#legend span { display: flex; align-items: center; gap: 5px; }
+.swatch {
+  display: inline-block; width: 14px; height: 2px; border-radius: 1px;
+}
+.dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+}
+
+/* ── Two-panel chart area ───────────────────────────────────────────── */
+#panels {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+}
+.panel {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+.ph {
+  padding: 6px 12px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #eee;
+  flex-shrink: 0;
+}
+.ph-title {
+  font-size: 13px; font-weight: 700; color: #222;
+}
+.ph-sub {
+  font-size: 10px; color: #888; margin-top: 1px;
+}
+/* Sizing wrapper. A bare <canvas> with flex:1 is unreliable because its
+ * intrinsic 300x150 size confuses the flex algorithm; wrapping it in a
+ * flex-sized box and absolute-positioning the canvas inside guarantees
+ * the canvas always fills the available area. */
+.chart-box {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+.chart-box canvas {
+  display: block;
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+}
+
+/* ── Footnote ───────────────────────────────────────────────────────── */
+#footnote {
+  font-size: 10px;
+  color: #777;
+  text-align: center;
+  flex-shrink: 0;
+  padding: 2px 0 0;
+}
+#footnote b { color: #444; }
+</style>
+</head>
+<body>
+
+<!-- ── Controls ────────────────────────────────────────────────────── -->
+<div id="controls">
+  <div class="cg"><label>Nodes:</label><span id="n-badge">N = @@N@@</span></div>
+  <div class="cg" style="flex-direction:column;align-items:flex-start;gap:1px">
+    <div style="display:flex;align-items:center;gap:6px">
+      <label>k (neighbours):</label>
+      <input type="range" id="inp-k" min="0" max="@@k_max_idx@@" step="1" value="0">
+      <span id="k-badge">@@k_default@@</span>
+    </div>
+    <div id="k-ticks"></div>
+  </div>
+</div>
+
+<!-- ── Legend ─────────────────────────────────────────────────────── -->
+<div id="legend">
+  <span><span class="swatch" style="background:#c62828"></span>
+        <span class="dot"     style="background:#c62828"></span>
+        Ring lattice (β = 0, constant)</span>
+  <span><span class="swatch" style="background:#2e7d32"></span>
+        <span class="dot"     style="background:#2e7d32"></span>
+        Erdős–Rényi (β-independent)</span>
+  <span><span class="swatch" style="background:#1565C0"></span>
+        <span class="dot"     style="background:#1565C0"></span>
+        Watts–Strogatz</span>
+</div>
+
+<!-- ── Two panels (L and C) ───────────────────────────────────────── -->
+<div id="panels">
+  <div class="panel">
+    <div class="ph">
+      <div class="ph-title">Average path length <i>L</i>(β)</div>
+      <div class="ph-sub">x-axis: rewiring probability β (log) · y-axis: <i>L</i></div>
+    </div>
+    <div class="chart-box"><canvas id="cv-L"></canvas></div>
+  </div>
+  <div class="panel">
+    <div class="ph">
+      <div class="ph-title">Clustering coefficient <i>C</i>(β)</div>
+      <div class="ph-sub">x-axis: rewiring probability β (log) · y-axis: <i>C</i></div>
+    </div>
+    <div class="chart-box"><canvas id="cv-C"></canvas></div>
+  </div>
+</div>
+
+<div id="footnote">
+  Values precomputed for <b>N = @@N@@</b> nodes, one realisation per
+  (k, β) with a fixed seed. Slide <b>k</b> to redraw both panels.
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════
+// Embedded data
+// ═══════════════════════════════════════════════════════════════════════
+const N        = @@N@@;
+const K_VALUES = @@k_values_json@@;     // e.g. [10, 20, …, 100]
+const BETAS    = @@betas_json@@;        // e.g. [0.001, 0.005, …, 1]
+const DATA     = @@data_json@@;         // { "10": { ring:{L,C}, er:{L,C}, ws:{ "0.001":{L,C}, ...} }, ... }
+
+const COL = { ring: '#c62828', er: '#2e7d32', ws: '#1565C0' };
+
+// ═══════════════════════════════════════════════════════════════════════
+// k-slider ticks
+// ═══════════════════════════════════════════════════════════════════════
+const ticksDiv = document.getElementById('k-ticks');
+K_VALUES.forEach(k => {
+  const sp = document.createElement('span');
+  sp.textContent = k;
+  ticksDiv.appendChild(sp);
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+// Canvas setup
+//
+// We size from the wrapper `.chart-box` (which is flex-sized by the
+// panel) rather than from the canvas itself, because a bare <canvas>
+// has an intrinsic 300x150 size that confuses flex layouts. The CSS
+// already pins the canvas to width/height 100% of the box, so we only
+// need to keep the drawing buffer in sync with the displayed size.
+// Returns null if the box has no measurable size yet (layout pending),
+// so the caller can retry on the next frame.
+// ═══════════════════════════════════════════════════════════════════════
+function setupCanvas(canvas) {
+  const box = canvas.parentElement;
+  const W = box.clientWidth;
+  const H = box.clientHeight;
+  if (W < 20 || H < 20) return null;
+  const dpr = window.devicePixelRatio || 1;
+  if (canvas.width  !== W * dpr) canvas.width  = W * dpr;
+  if (canvas.height !== H * dpr) canvas.height = H * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  return { ctx, W, H };
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Plot rendering
+// ═══════════════════════════════════════════════════════════════════════
+function drawChart(canvasId, metric, k) {
+  const canvas = document.getElementById(canvasId);
+  const ready = setupCanvas(canvas);
+  if (!ready) {
+    // Wrapper has no measurable size yet — try again on the next frame.
+    requestAnimationFrame(() => drawChart(canvasId, metric, k));
+    return;
+  }
+  const { ctx, W, H } = ready;
+
+  const kData = DATA[String(k)];
+  if (!kData) return;
+
+  const ringVal = kData.ring[metric];
+  const erVal   = kData.er[metric];
+  // Python keys floats as str(1.0) → "1.0", but JS's (1).toString() is "1".
+  // Look up under both spellings so either generator works.
+  const wsVals  = BETAS.map(b => {
+    const entry = kData.ws[b.toString()] || kData.ws[b.toFixed(1)];
+    return entry[metric];
+  });
+
+  // y range
+  const allVals = [ringVal, erVal, ...wsVals];
+  let ymin = Math.min(...allVals);
+  let ymax = Math.max(...allVals);
+  if (ymax - ymin < 1e-9) { ymax = ymin + 1; }
+  const pad_v = (ymax - ymin) * 0.10;
+  ymin = Math.max(0, ymin - pad_v);
+  ymax = ymax + pad_v;
+
+  // x range (log10 of β)
+  const logBetas = BETAS.map(Math.log10);
+  const xmin = Math.min(...logBetas) - 0.15;
+  const xmax = Math.max(...logBetas) + 0.15;
+
+  // Plot box. Extra top-padding (pad.t) reserves room for the constant-
+  // line legend ("ring = …  ·  ER = …") drawn above the plot, so those
+  // labels can't collide with the WS marker labels at the right end.
+  const pad = { t: 26, r: 18, b: 38, l: 56 };
+  const cW = W - pad.l - pad.r;
+  const cH = H - pad.t - pad.b;
+
+  // axis helpers
+  const xPx = lb => pad.l + (lb - xmin) / (xmax - xmin) * cW;
+  const yPx = v  => pad.t + (1 - (v - ymin) / (ymax - ymin)) * cH;
+
+  // background grid
+  ctx.strokeStyle = '#eee';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([2, 3]);
+
+  // horizontal gridlines (5 ticks)
+  const yTicks = 5;
+  for (let i = 0; i <= yTicks; i++) {
+    const yv = ymin + (i / yTicks) * (ymax - ymin);
+    const y  = yPx(yv);
+    ctx.beginPath();
+    ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + cW, y); ctx.stroke();
+  }
+
+  // vertical gridlines at each β
+  logBetas.forEach(lb => {
+    const x = xPx(lb);
+    ctx.beginPath();
+    ctx.moveTo(x, pad.t); ctx.lineTo(x, pad.t + cH); ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  // axis frame
+  ctx.strokeStyle = '#888';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad.l, pad.t);
+  ctx.lineTo(pad.l, pad.t + cH);
+  ctx.lineTo(pad.l + cW, pad.t + cH);
+  ctx.stroke();
+
+  // y-axis labels
+  ctx.fillStyle = '#555';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i <= yTicks; i++) {
+    const yv = ymin + (i / yTicks) * (ymax - ymin);
+    const y  = yPx(yv);
+    ctx.fillText(yv.toFixed(metric === 'C' ? 3 : 2), pad.l - 6, y);
+  }
+
+  // x-axis labels (β values, plain decimals — no scientific notation)
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  BETAS.forEach((b, i) => {
+    const x = xPx(logBetas[i]);
+    ctx.fillText(b.toString(), x, pad.t + cH + 6);
+  });
+
+  // axis titles
+  ctx.fillStyle = '#444';
+  ctx.font = 'italic 11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('β', pad.l + cW / 2, pad.t + cH + 22);
+
+  ctx.save();
+  ctx.translate(14, pad.t + cH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.textBaseline = 'middle';
+  ctx.fillText(metric === 'L' ? 'L  (avg. path length)' : 'C  (clustering)', 0, 0);
+  ctx.restore();
+
+  // ── Ring baseline (constant horizontal line) ──────────────────────
+  ctx.strokeStyle = COL.ring;
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([5, 4]);
+  ctx.beginPath();
+  ctx.moveTo(pad.l,         yPx(ringVal));
+  ctx.lineTo(pad.l + cW,    yPx(ringVal));
+  ctx.stroke();
+
+  // ── ER baseline (constant horizontal line) ────────────────────────
+  ctx.strokeStyle = COL.er;
+  ctx.beginPath();
+  ctx.moveTo(pad.l,         yPx(erVal));
+  ctx.lineTo(pad.l + cW,    yPx(erVal));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ── WS line + markers ─────────────────────────────────────────────
+  ctx.strokeStyle = COL.ws;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  logBetas.forEach((lb, i) => {
+    const x = xPx(lb), y = yPx(wsVals[i]);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // WS markers
+  ctx.fillStyle = COL.ws;
+  logBetas.forEach((lb, i) => {
+    ctx.beginPath();
+    ctx.arc(xPx(lb), yPx(wsVals[i]), 3.5, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Constant-line legend at the top of the plot. Splitting "ring = …"
+  // and "ER = …" to the 25% and 75% x-positions and reserving the top
+  // padding for them guarantees they never collide with the WS marker
+  // labels along the curve — regardless of where the WS values fall.
+  ctx.font = 'bold 10px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  const ringFmt = ringVal.toFixed(metric === 'C' ? 4 : 3);
+  const erFmt   = erVal.toFixed(metric === 'C' ? 4 : 3);
+  ctx.fillStyle = COL.ring;
+  ctx.fillText('ring = ' + ringFmt, pad.l + cW * 0.30, 6);
+  ctx.fillStyle = COL.er;
+  ctx.fillText('ER = '   + erFmt,   pad.l + cW * 0.70, 6);
+
+  // small value tags above WS markers
+  ctx.fillStyle = COL.ws;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  logBetas.forEach((lb, i) => {
+    const fmt = metric === 'C' ? wsVals[i].toFixed(3)
+                               : wsVals[i].toFixed(2);
+    ctx.fillText(fmt, xPx(lb), yPx(wsVals[i]) - 6);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// k slider wiring
+// ═══════════════════════════════════════════════════════════════════════
+const kBadge = document.getElementById('k-badge');
+const inpK   = document.getElementById('inp-k');
+
+function redraw() {
+  const idx = parseInt(inpK.value);
+  const k   = K_VALUES[idx];
+  kBadge.textContent = k;
+  drawChart('cv-L', 'L', k);
+  drawChart('cv-C', 'C', k);
+}
+
+inpK.addEventListener('input', redraw);
+
+// Initial render — use the configured default if available
+const defaultIdx = K_VALUES.indexOf(@@k_default@@);
+inpK.value = defaultIdx >= 0 ? defaultIdx : 0;
+
+// Wait for the iframe's flex layout to settle before the first paint.
+// rAF runs after the next layout pass; one extra rAF guarantees the
+// canvases have their final flex-driven dimensions on every browser.
+function firstDraw() {
+  requestAnimationFrame(() => requestAnimationFrame(redraw));
+}
+if (document.readyState === 'complete') {
+  firstDraw();
+} else {
+  window.addEventListener('load', firstDraw);
+}
+
+// Redraw on any size change (window resize, devtools open/close, iframe
+// resize) so the canvases stay sharp and the chart fills its panel.
+if (typeof ResizeObserver !== 'undefined') {
+  const ro = new ResizeObserver(() => redraw());
+  ro.observe(document.getElementById('cv-L'));
+  ro.observe(document.getElementById('cv-C'));
+} else {
+  window.addEventListener('resize', redraw);
+}
+</script>
+</body>
+</html>

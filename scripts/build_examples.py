@@ -29,6 +29,9 @@ Outputs
     Watts-Strogatz - interactive cover-time histogram.
 ``docs/examples/compare_times.html``
     Side-by-side cover-time and mixing-time comparison (Ring / WS / ER).
+``docs/examples/metrics_analytics.html``
+    Interactive L(β) and C(β) panels at N = 1000, with a slider for the
+    average degree k (10, 20, …, 100).
 """
 
 from __future__ import annotations
@@ -46,6 +49,7 @@ from src.smallworld.visualization import (
     save_walk_visualization,
     save_cover_time_visualization,
     save_compare_times_visualization,
+    save_metrics_analytics_visualization,
 )
 
 # ── parameters ────────────────────────────────────────────────────────────────
@@ -109,6 +113,19 @@ for name, G in graphs.items():
 dest = save_compare_times_visualization(
     OUT_DIR / "compare_times.html",
     N=N, k=K, beta=BETA,
+)
+print(f"  [ok] {dest.relative_to(ROOT)}")
+
+# ── metric-analytics page (L(β) and C(β) sweeps, fixed N = 1000) ────────────
+# This pre-computes 10 k × 7 β = 70 Watts–Strogatz realisations plus the
+# ring and ER baselines, so it takes ~1-3 minutes the first time you run it.
+dest = save_metrics_analytics_visualization(
+    OUT_DIR / "metrics_analytics.html",
+    N=1000,
+    k_values=list(range(10, 101, 10)),
+    betas=[0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0],
+    k_default=10,
+    seed=SEED,
 )
 print(f"  [ok] {dest.relative_to(ROOT)}")
 
