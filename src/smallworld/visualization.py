@@ -428,8 +428,9 @@ def build_metrics_analytics_visualization(
         Average degrees to sweep over. Must all be even (so that the ring
         and WS builders accept them). Defaults to ``[10, 20, …, 100]``.
     betas : list[float], optional
-        Rewiring probabilities to evaluate WS at.
-        Defaults to ``[0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]``.
+        Rewiring probabilities to evaluate WS at, spaced one decade apart
+        so they are equidistant on the log-β axis.
+        Defaults to ``[0.0001, 0.001, 0.01, 0.1, 1]``.
     k_default : int, default 10
         Slider position the page opens on. Must appear in ``k_values``.
     seed : int, default 42
@@ -443,7 +444,7 @@ def build_metrics_analytics_visualization(
     if k_values is None:
         k_values = list(range(10, 101, 10))
     if betas is None:
-        betas = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0]
+        betas = [0.0001, 0.001, 0.01, 0.1, 1.0]
 
     print(f"Building metric-analytics data  (N={N}) ...")
     data = _compute_metrics_data(

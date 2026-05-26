@@ -45,35 +45,26 @@ label { font-size: 11px; color: #555; }
   border-radius: 3px; padding: 2px 7px; min-width: 36px; text-align: center;
 }
 input[type=range] { width: 220px; cursor: pointer; accent-color: #1565C0; }
-#k-ticks {
-  display: flex;
-  justify-content: space-between;
-  width: 220px;
-  font-size: 9px;
-  color: #999;
-  margin-top: -2px;
-}
 
 /* ── Legend ─────────────────────────────────────────────────────────── */
 #legend {
   display: flex;
   justify-content: center;
-  gap: 16px;
+  gap: 18px;
   font-size: 11px;
   color: #555;
   flex-shrink: 0;
   height: 18px;
   align-items: center;
+  flex-wrap: wrap;
 }
 #legend span { display: flex; align-items: center; gap: 5px; }
-.swatch {
-  display: inline-block; width: 14px; height: 2px; border-radius: 1px;
-}
-.dot {
-  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+#legend svg { flex-shrink: 0; }
+#legend .sep {
+  width: 1px; height: 14px; background: #ccc;
 }
 
-/* ── Two-panel chart area ───────────────────────────────────────────── */
+/* ── Single chart panel ─────────────────────────────────────────────── */
 #panels {
   display: flex;
   gap: 8px;
@@ -135,50 +126,61 @@ input[type=range] { width: 220px; cursor: pointer; accent-color: #1565C0; }
 <!-- ── Controls ────────────────────────────────────────────────────── -->
 <div id="controls">
   <div class="cg"><label>Nodes:</label><span id="n-badge">N = @@N@@</span></div>
-  <div class="cg" style="flex-direction:column;align-items:flex-start;gap:1px">
-    <div style="display:flex;align-items:center;gap:6px">
-      <label>k (neighbours):</label>
-      <input type="range" id="inp-k" min="0" max="@@k_max_idx@@" step="1" value="0">
-      <span id="k-badge">@@k_default@@</span>
-    </div>
-    <div id="k-ticks"></div>
+  <div class="cg">
+    <label>k (neighbours):</label>
+    <input type="range" id="inp-k" min="0" max="@@k_max_idx@@" step="1" value="0">
+    <span id="k-badge">@@k_default@@</span>
   </div>
 </div>
 
 <!-- ── Legend ─────────────────────────────────────────────────────── -->
 <div id="legend">
-  <span><span class="swatch" style="background:#c62828"></span>
-        <span class="dot"     style="background:#c62828"></span>
-        Ring lattice (β = 0, constant)</span>
-  <span><span class="swatch" style="background:#2e7d32"></span>
-        <span class="dot"     style="background:#2e7d32"></span>
-        Erdős–Rényi (β-independent)</span>
-  <span><span class="swatch" style="background:#1565C0"></span>
-        <span class="dot"     style="background:#1565C0"></span>
-        Watts–Strogatz</span>
+  <span>
+    <svg width="22" height="10"><line x1="0" y1="5" x2="22" y2="5"
+         stroke="#1565C0" stroke-width="2.5"/></svg>
+    <b style="color:#1565C0">L</b> (left axis)
+  </span>
+  <span>
+    <svg width="22" height="10"><line x1="0" y1="5" x2="22" y2="5"
+         stroke="#c62828" stroke-width="2.5"/></svg>
+    <b style="color:#c62828">C</b> (right axis)
+  </span>
+  <span class="sep"></span>
+  <span>
+    <svg width="26" height="10"><line x1="0" y1="5" x2="26" y2="5"
+         stroke="#444" stroke-width="2.2"/></svg>
+    Watts–Strogatz
+  </span>
+  <span>
+    <svg width="26" height="10"><line x1="0" y1="5" x2="26" y2="5"
+         stroke="#444" stroke-width="1.4" stroke-dasharray="6,3"/></svg>
+    Ring lattice
+  </span>
+  <span>
+    <svg width="26" height="10"><line x1="0" y1="5" x2="26" y2="5"
+         stroke="#444" stroke-width="1.4" stroke-dasharray="2,3"/></svg>
+    Erdős–Rényi
+  </span>
 </div>
 
-<!-- ── Two panels (L and C) ───────────────────────────────────────── -->
+<!-- ── Single panel ───────────────────────────────────────────────── -->
 <div id="panels">
   <div class="panel">
     <div class="ph">
-      <div class="ph-title">Average path length <i>L</i>(β)</div>
-      <div class="ph-sub">x-axis: rewiring probability β (log) · y-axis: <i>L</i></div>
+      <div class="ph-title">L(β) and C(β) — the small-world window</div>
+      <div class="ph-sub">
+        Blue curves use the left axis (<i>L</i>); red curves use the right
+        axis (<i>C</i>). Line style identifies the network: solid =
+        Watts–Strogatz, dashed = ring lattice, dotted = Erdős–Rényi.
+      </div>
     </div>
-    <div class="chart-box"><canvas id="cv-L"></canvas></div>
-  </div>
-  <div class="panel">
-    <div class="ph">
-      <div class="ph-title">Clustering coefficient <i>C</i>(β)</div>
-      <div class="ph-sub">x-axis: rewiring probability β (log) · y-axis: <i>C</i></div>
-    </div>
-    <div class="chart-box"><canvas id="cv-C"></canvas></div>
+    <div class="chart-box"><canvas id="cv-main"></canvas></div>
   </div>
 </div>
 
 <div id="footnote">
   Values precomputed for <b>N = @@N@@</b> nodes, one realisation per
-  (k, β) with a fixed seed. Slide <b>k</b> to redraw both panels.
+  (k, β) with a fixed seed. Slide <b>k</b> to redraw the chart.
 </div>
 
 <script>
@@ -187,20 +189,11 @@ input[type=range] { width: 220px; cursor: pointer; accent-color: #1565C0; }
 // ═══════════════════════════════════════════════════════════════════════
 const N        = @@N@@;
 const K_VALUES = @@k_values_json@@;     // e.g. [10, 20, …, 100]
-const BETAS    = @@betas_json@@;        // e.g. [0.001, 0.005, …, 1]
+const BETAS    = @@betas_json@@;        // e.g. [0.0001, 0.001, 0.01, 0.1, 1]
 const DATA     = @@data_json@@;         // { "10": { ring:{L,C}, er:{L,C}, ws:{ "0.001":{L,C}, ...} }, ... }
 
-const COL = { ring: '#c62828', er: '#2e7d32', ws: '#1565C0' };
-
-// ═══════════════════════════════════════════════════════════════════════
-// k-slider ticks
-// ═══════════════════════════════════════════════════════════════════════
-const ticksDiv = document.getElementById('k-ticks');
-K_VALUES.forEach(k => {
-  const sp = document.createElement('span');
-  sp.textContent = k;
-  ticksDiv.appendChild(sp);
-});
+const L_COLOR = '#1565C0';   // blue — read on the LEFT y-axis
+const C_COLOR = '#c62828';   // red  — read on the RIGHT y-axis
 
 // ═══════════════════════════════════════════════════════════════════════
 // Canvas setup
@@ -228,14 +221,13 @@ function setupCanvas(canvas) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// Plot rendering
+// Plot rendering — single canvas, dual y-axis
 // ═══════════════════════════════════════════════════════════════════════
-function drawChart(canvasId, metric, k) {
-  const canvas = document.getElementById(canvasId);
+function drawChart(k) {
+  const canvas = document.getElementById('cv-main');
   const ready = setupCanvas(canvas);
   if (!ready) {
-    // Wrapper has no measurable size yet — try again on the next frame.
-    requestAnimationFrame(() => drawChart(canvasId, metric, k));
+    requestAnimationFrame(() => drawChart(k));
     return;
   }
   const { ctx, W, H } = ready;
@@ -243,55 +235,48 @@ function drawChart(canvasId, metric, k) {
   const kData = DATA[String(k)];
   if (!kData) return;
 
-  const ringVal = kData.ring[metric];
-  const erVal   = kData.er[metric];
   // Python keys floats as str(1.0) → "1.0", but JS's (1).toString() is "1".
   // Look up under both spellings so either generator works.
-  const wsVals  = BETAS.map(b => {
-    const entry = kData.ws[b.toString()] || kData.ws[b.toFixed(1)];
-    return entry[metric];
-  });
+  function wsAt(b) {
+    return kData.ws[b.toString()] || kData.ws[b.toFixed(1)];
+  }
+  const wsL = BETAS.map(b => wsAt(b).L);
+  const wsC = BETAS.map(b => wsAt(b).C);
 
-  // y range
-  const allVals = [ringVal, erVal, ...wsVals];
-  let ymin = Math.min(...allVals);
-  let ymax = Math.max(...allVals);
-  if (ymax - ymin < 1e-9) { ymax = ymin + 1; }
-  const pad_v = (ymax - ymin) * 0.10;
-  ymin = Math.max(0, ymin - pad_v);
-  ymax = ymax + pad_v;
+  // ── Y-ranges, independent per axis ────────────────────────────────
+  function range(vals) {
+    let lo = Math.min(...vals), hi = Math.max(...vals);
+    if (hi - lo < 1e-9) hi = lo + 1;
+    const p = (hi - lo) * 0.10;
+    return { lo: Math.max(0, lo - p), hi: hi + p };
+  }
+  const Lr = range([kData.ring.L, kData.er.L, ...wsL]);
+  const Cr = range([kData.ring.C, kData.er.C, ...wsC]);
 
-  // x range (log10 of β)
+  // ── X-range (log10 β) ─────────────────────────────────────────────
   const logBetas = BETAS.map(Math.log10);
-  const xmin = Math.min(...logBetas) - 0.15;
-  const xmax = Math.max(...logBetas) + 0.15;
+  const xmin = Math.min(...logBetas) - 0.18;
+  const xmax = Math.max(...logBetas) + 0.18;
 
-  // Plot box. Extra top-padding (pad.t) reserves room for the constant-
-  // line legend ("ring = …  ·  ER = …") drawn above the plot, so those
-  // labels can't collide with the WS marker labels at the right end.
-  const pad = { t: 26, r: 18, b: 38, l: 56 };
+  // ── Plot box ──────────────────────────────────────────────────────
+  const pad = { t: 18, r: 64, b: 38, l: 64 };
   const cW = W - pad.l - pad.r;
   const cH = H - pad.t - pad.b;
 
-  // axis helpers
-  const xPx = lb => pad.l + (lb - xmin) / (xmax - xmin) * cW;
-  const yPx = v  => pad.t + (1 - (v - ymin) / (ymax - ymin)) * cH;
+  const xPx  = lb => pad.l + (lb - xmin) / (xmax - xmin) * cW;
+  const yPxL = v  => pad.t + (1 - (v - Lr.lo) / (Lr.hi - Lr.lo)) * cH;
+  const yPxC = v  => pad.t + (1 - (v - Cr.lo) / (Cr.hi - Cr.lo)) * cH;
 
-  // background grid
+  // ── Gridlines ─────────────────────────────────────────────────────
   ctx.strokeStyle = '#eee';
   ctx.lineWidth = 1;
   ctx.setLineDash([2, 3]);
-
-  // horizontal gridlines (5 ticks)
   const yTicks = 5;
   for (let i = 0; i <= yTicks; i++) {
-    const yv = ymin + (i / yTicks) * (ymax - ymin);
-    const y  = yPx(yv);
+    const y = pad.t + (i / yTicks) * cH;
     ctx.beginPath();
     ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + cW, y); ctx.stroke();
   }
-
-  // vertical gridlines at each β
   logBetas.forEach(lb => {
     const x = xPx(lb);
     ctx.beginPath();
@@ -299,105 +284,107 @@ function drawChart(canvasId, metric, k) {
   });
   ctx.setLineDash([]);
 
-  // axis frame
+  // ── Axis frame (both verticals + bottom) ──────────────────────────
   ctx.strokeStyle = '#888';
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(pad.l, pad.t);
-  ctx.lineTo(pad.l, pad.t + cH);
-  ctx.lineTo(pad.l + cW, pad.t + cH);
+  ctx.moveTo(pad.l,         pad.t);
+  ctx.lineTo(pad.l,         pad.t + cH);
+  ctx.lineTo(pad.l + cW,    pad.t + cH);
+  ctx.lineTo(pad.l + cW,    pad.t);
   ctx.stroke();
 
-  // y-axis labels
-  ctx.fillStyle = '#555';
+  // ── Left axis (L) ticks & labels, in blue ─────────────────────────
   ctx.font = '10px sans-serif';
+  ctx.fillStyle = L_COLOR;
   ctx.textAlign = 'right';
   ctx.textBaseline = 'middle';
   for (let i = 0; i <= yTicks; i++) {
-    const yv = ymin + (i / yTicks) * (ymax - ymin);
-    const y  = yPx(yv);
-    ctx.fillText(yv.toFixed(metric === 'C' ? 3 : 2), pad.l - 6, y);
+    const v = Lr.lo + (i / yTicks) * (Lr.hi - Lr.lo);
+    ctx.fillText(v.toFixed(2), pad.l - 6, yPxL(v));
   }
 
-  // x-axis labels (β values, plain decimals — no scientific notation)
+  // ── Right axis (C) ticks & labels, in red ─────────────────────────
+  ctx.fillStyle = C_COLOR;
+  ctx.textAlign = 'left';
+  for (let i = 0; i <= yTicks; i++) {
+    const v = Cr.lo + (i / yTicks) * (Cr.hi - Cr.lo);
+    ctx.fillText(v.toFixed(3), pad.l + cW + 6, yPxC(v));
+  }
+
+  // ── X-axis labels (plain decimal β) ───────────────────────────────
+  ctx.fillStyle = '#555';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
   BETAS.forEach((b, i) => {
-    const x = xPx(logBetas[i]);
-    ctx.fillText(b.toString(), x, pad.t + cH + 6);
+    ctx.fillText(b.toString(), xPx(logBetas[i]), pad.t + cH + 6);
   });
 
-  // axis titles
-  ctx.fillStyle = '#444';
+  // ── Axis titles ───────────────────────────────────────────────────
   ctx.font = 'italic 11px sans-serif';
+  ctx.fillStyle = '#444';
   ctx.textAlign = 'center';
-  ctx.fillText('β', pad.l + cW / 2, pad.t + cH + 22);
+  ctx.fillText('β  (rewiring probability, log scale)',
+               pad.l + cW / 2, pad.t + cH + 22);
 
+  // Left title (L, blue), rotated
   ctx.save();
   ctx.translate(14, pad.t + cH / 2);
   ctx.rotate(-Math.PI / 2);
   ctx.textBaseline = 'middle';
-  ctx.fillText(metric === 'L' ? 'L  (avg. path length)' : 'C  (clustering)', 0, 0);
+  ctx.fillStyle = L_COLOR;
+  ctx.font = 'italic 11px sans-serif';
+  ctx.fillText('L  (avg. path length)', 0, 0);
   ctx.restore();
 
-  // ── Ring baseline (constant horizontal line) ──────────────────────
-  ctx.strokeStyle = COL.ring;
-  ctx.lineWidth = 1.5;
-  ctx.setLineDash([5, 4]);
-  ctx.beginPath();
-  ctx.moveTo(pad.l,         yPx(ringVal));
-  ctx.lineTo(pad.l + cW,    yPx(ringVal));
-  ctx.stroke();
+  // Right title (C, red), rotated the other way
+  ctx.save();
+  ctx.translate(W - 14, pad.t + cH / 2);
+  ctx.rotate(Math.PI / 2);
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = C_COLOR;
+  ctx.fillText('C  (clustering coefficient)', 0, 0);
+  ctx.restore();
 
-  // ── ER baseline (constant horizontal line) ────────────────────────
-  ctx.strokeStyle = COL.er;
-  ctx.beginPath();
-  ctx.moveTo(pad.l,         yPx(erVal));
-  ctx.lineTo(pad.l + cW,    yPx(erVal));
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // ── WS line + markers ─────────────────────────────────────────────
-  ctx.strokeStyle = COL.ws;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  logBetas.forEach((lb, i) => {
-    const x = xPx(lb), y = yPx(wsVals[i]);
-    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-  });
-  ctx.stroke();
-
-  // WS markers
-  ctx.fillStyle = COL.ws;
-  logBetas.forEach((lb, i) => {
+  // ── Helpers to draw a horizontal constant and a WS curve ──────────
+  function hline(y, color, dash) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.4;
+    ctx.setLineDash(dash);
     ctx.beginPath();
-    ctx.arc(xPx(lb), yPx(wsVals[i]), 3.5, 0, Math.PI * 2);
-    ctx.fill();
-  });
+    ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + cW, y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  function curve(ys, yPx, color) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    logBetas.forEach((lb, i) => {
+      const x = xPx(lb), y = yPx(ys[i]);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    ctx.fillStyle = color;
+    logBetas.forEach((lb, i) => {
+      ctx.beginPath();
+      ctx.arc(xPx(lb), yPx(ys[i]), 3.2, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
 
-  // Constant-line legend at the top of the plot. Splitting "ring = …"
-  // and "ER = …" to the 25% and 75% x-positions and reserving the top
-  // padding for them guarantees they never collide with the WS marker
-  // labels along the curve — regardless of where the WS values fall.
-  ctx.font = 'bold 10px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'top';
-  const ringFmt = ringVal.toFixed(metric === 'C' ? 4 : 3);
-  const erFmt   = erVal.toFixed(metric === 'C' ? 4 : 3);
-  ctx.fillStyle = COL.ring;
-  ctx.fillText('ring = ' + ringFmt, pad.l + cW * 0.30, 6);
-  ctx.fillStyle = COL.er;
-  ctx.fillText('ER = '   + erFmt,   pad.l + cW * 0.70, 6);
+  // ── Constants on the L (blue) axis ────────────────────────────────
+  hline(yPxL(kData.ring.L), L_COLOR, [6, 3]);  // ring  L : blue dashed
+  hline(yPxL(kData.er.L),   L_COLOR, [2, 3]);  // ER    L : blue dotted
 
-  // small value tags above WS markers
-  ctx.fillStyle = COL.ws;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'bottom';
-  logBetas.forEach((lb, i) => {
-    const fmt = metric === 'C' ? wsVals[i].toFixed(3)
-                               : wsVals[i].toFixed(2);
-    ctx.fillText(fmt, xPx(lb), yPx(wsVals[i]) - 6);
-  });
+  // ── Constants on the C (red) axis ─────────────────────────────────
+  hline(yPxC(kData.ring.C), C_COLOR, [6, 3]);  // ring  C : red dashed
+  hline(yPxC(kData.er.C),   C_COLOR, [2, 3]);  // ER    C : red dotted
+
+  // ── WS curves (solid, with markers) ───────────────────────────────
+  curve(wsL, yPxL, L_COLOR);  // WS L : blue solid
+  curve(wsC, yPxC, C_COLOR);  // WS C : red  solid
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -410,8 +397,7 @@ function redraw() {
   const idx = parseInt(inpK.value);
   const k   = K_VALUES[idx];
   kBadge.textContent = k;
-  drawChart('cv-L', 'L', k);
-  drawChart('cv-C', 'C', k);
+  drawChart(k);
 }
 
 inpK.addEventListener('input', redraw);
@@ -421,8 +407,6 @@ const defaultIdx = K_VALUES.indexOf(@@k_default@@);
 inpK.value = defaultIdx >= 0 ? defaultIdx : 0;
 
 // Wait for the iframe's flex layout to settle before the first paint.
-// rAF runs after the next layout pass; one extra rAF guarantees the
-// canvases have their final flex-driven dimensions on every browser.
 function firstDraw() {
   requestAnimationFrame(() => requestAnimationFrame(redraw));
 }
@@ -432,12 +416,10 @@ if (document.readyState === 'complete') {
   window.addEventListener('load', firstDraw);
 }
 
-// Redraw on any size change (window resize, devtools open/close, iframe
-// resize) so the canvases stay sharp and the chart fills its panel.
+// Redraw on any size change so the chart stays sharp and fills its panel.
 if (typeof ResizeObserver !== 'undefined') {
   const ro = new ResizeObserver(() => redraw());
-  ro.observe(document.getElementById('cv-L'));
-  ro.observe(document.getElementById('cv-C'));
+  ro.observe(document.getElementById('cv-main'));
 } else {
   window.addEventListener('resize', redraw);
 }

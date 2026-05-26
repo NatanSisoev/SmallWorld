@@ -123,7 +123,7 @@ dest = save_metrics_analytics_visualization(
     OUT_DIR / "metrics_analytics.html",
     N=1000,
     k_values=list(range(10, 101, 10)),
-    betas=[0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0],
+    betas=[0.0001, 0.001, 0.01, 0.1, 1.0],
     k_default=10,
     seed=SEED,
 )
