@@ -10,12 +10,13 @@
 PYTHON ?= python
 
 .DEFAULT_GOAL := help
-.PHONY: help install docs docs-serve examples notebooks clean
+.PHONY: help install docs docs-serve examples precompute notebooks clean
 
 help:
 	@echo "Available targets:"
 	@echo "  install      Install Python dependencies from requirements.txt"
-	@echo "  examples     Regenerate the pyvis HTML examples in docs/examples/"
+	@echo "  examples     Regenerate HTML examples (fast: reads data/ cache)"
+	@echo "  precompute   Recompute slow data caches (~15 min). Commit data/*.json after."
 	@echo "  docs         Build the static documentation site into site/"
 	@echo "  docs-serve   Start a live-reloading docs server on http://localhost:8000"
 	@echo "  notebooks    Execute every notebook in-place (reproducibility check)"
@@ -25,6 +26,10 @@ install:
 	$(PYTHON) -m pip install -r requirements.txt
 
 examples:
+	$(PYTHON) scripts/build_examples.py
+
+precompute:
+	$(PYTHON) -c "from pathlib import Path; [p.unlink() for p in [Path('data/metrics_analytics_data.json'), Path('data/facebook_cache.json')] if p.exists()]"
 	$(PYTHON) scripts/build_examples.py
 
 docs: examples

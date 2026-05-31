@@ -48,7 +48,7 @@ $L$ (left axis, blue) and the **global clustering coefficient** $C$
 already dropped but $C$ is still high — is visible at a glance. All
 values are computed on graphs with $N = 1000$ nodes (a single
 realisation per $(k, \beta)$, fixed seed) using the hand-written
-metrics from [`calculate_metrics.py`](../api/networks.md).
+metrics from [`calculate_metrics.py`](api/networks.md).
 
 The $\beta$ axis sweeps the decade-spaced set
 $\{10^{-4},\, 10^{-3},\, 10^{-2},\, 10^{-1},\, 1\}$, so the points are

@@ -5,6 +5,11 @@ CLAUDE.md
 # Figures
 figures/
 
+# Downloaded datasets (large binaries, not versioned)
+data/*.gz
+data/*.txt
+data/*.txt.gz
+
 # Generated pyvis HTML embedded in the docs (rebuilt by `make examples`)
 docs/examples/
 

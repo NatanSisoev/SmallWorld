@@ -68,6 +68,26 @@ scales.
     Sweep $\beta$ and watch $L$ and $C$ evolve in real time →
     [Explore → Side-by-side: effect of β](explore.md#side-by-side-effect-of-beta)
 
+## Quantifying small-worldness: the σ coefficient
+
+Identifying the small-world window visually is intuitive, but comparing
+different real-world networks requires a single scalar. Humphries & Gurney
+(2008) propose the **smallworldness coefficient**:
+
+$$
+\sigma = \frac{C / C_{\text{rand}}}{L / L_{\text{rand}}}
+$$
+
+where $C_{\text{rand}}$ and $L_{\text{rand}}$ are the clustering coefficient
+and average path length of an Erdős–Rényi graph with the same $N$ and
+expected degree $k$. A network is considered small-world when $\sigma > 1$,
+meaning it is simultaneously more clustered *and* no longer than a random
+graph of the same size.
+
+In practice, $C_{\text{rand}} \approx k/N$ and $L_{\text{rand}} \approx \log N / \log k$,
+so $\sigma \gg 1$ for networks with tightly-knit local clusters connected by
+a few long-range shortcuts — exactly the Watts–Strogatz regime.
+
 ## Random walks
 
 The simple random walk on $G$ is a Markov chain with transition matrix
@@ -121,3 +141,4 @@ shortcuts is enough to make diffusion fast.
 - D. J. Watts and S. H. Strogatz. *Collective dynamics of "small-world" networks*. Nature **393**, 440–442 (1998).
 - S. Milgram. *The small-world problem*. Psychology Today **1**, 61–67 (1967).
 - D. Levin and Y. Peres. *Markov chains and mixing times* (2nd ed.), AMS (2017).
+- M. D. Humphries and K. Gurney. *Network 'small-world-ness': a quantitative method for determining canonical network equivalence*. PLOS ONE **3**(4), e0002051 (2008).

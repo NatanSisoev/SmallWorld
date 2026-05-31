@@ -45,6 +45,10 @@ __all__ = [
     "save_compare_times_visualization",
     "build_metrics_analytics_visualization",
     "save_metrics_analytics_visualization",
+    "compute_metrics_data",
+    "build_metrics_analytics_from_data",
+    "build_facebook_visualization",
+    "save_facebook_visualization",
 ]
 
 _TEMPLATES_DIR = Path(__file__).parent / "templates"
@@ -337,7 +341,7 @@ def save_compare_times_visualization(
 # Metric-analytics visualisation (L and C across β, k slider)
 # ---------------------------------------------------------------------------
 
-def _compute_metrics_data(
+def compute_metrics_data(
     *,
     N: int,
     k_values: list[int],
@@ -447,7 +451,7 @@ def build_metrics_analytics_visualization(
         betas = [0.0001, 0.001, 0.01, 0.1, 1.0]
 
     print(f"Building metric-analytics data  (N={N}) ...")
-    data = _compute_metrics_data(
+    data = compute_metrics_data(
         N=N, k_values=k_values, betas=betas, seed=seed,
     )
 
@@ -499,6 +503,133 @@ def save_metrics_analytics_visualization(
             k_default=k_default,
             seed=seed,
         ),
+        encoding="utf-8",
+    )
+    return path
+
+
+# ---------------------------------------------------------------------------
+# Metrics-analytics render from cached data
+# ---------------------------------------------------------------------------
+
+def build_metrics_analytics_from_data(
+    data: dict,
+    *,
+    N: int = 1000,
+    k_values: list[int] | None = None,
+    betas: list[float] | None = None,
+    k_default: int = 10,
+) -> str:
+    """Render the metrics-analytics HTML from a precomputed data dict.
+
+    Separates the slow computation (:func:`compute_metrics_data`) from the
+    fast template render so cached data can be reused when only the template
+    changes.  The template is always re-read from disk on each call.
+
+    Parameters
+    ----------
+    data : dict
+        Output of :func:`compute_metrics_data`.
+    N, k_values, betas, k_default
+        Same meaning as in :func:`build_metrics_analytics_visualization`.
+
+    Returns
+    -------
+    str
+        A complete, UTF-8 HTML document.
+    """
+    if k_values is None:
+        k_values = list(range(10, 101, 10))
+    if betas is None:
+        betas = [0.0001, 0.001, 0.01, 0.1, 1.0]
+
+    betas_pretty = ",  ".join(f"{b:g}" for b in betas)
+    return _render(
+        "metrics_analytics.html",
+        N             = N,
+        k_max_idx     = len(k_values) - 1,
+        k_default     = k_default,
+        k_values_json = json.dumps(k_values),
+        betas_json    = json.dumps(betas),
+        betas_pretty  = betas_pretty,
+        data_json     = json.dumps(data),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Facebook real-network analysis visualisation
+# ---------------------------------------------------------------------------
+
+def build_facebook_visualization(
+    fit_result: dict,
+    sigma_result: dict,
+) -> str:
+    """Generate a self-contained HTML page for the Facebook β-fitting analysis.
+
+    Embeds all precomputed data as JSON and renders two Chart.js charts:
+
+    1. **Normalised (L, C) space** — the WS β-curve from ring to random,
+       the real Facebook network point, and the best-fit β* marker.
+    2. **σ breakdown** — bar chart of C_real/C_rand and L_real/L_rand
+       with the σ value in the title.
+
+    Parameters
+    ----------
+    fit_result : dict
+        Output of :func:`src.smallworld.real_network.fit_ws`.
+    sigma_result : dict
+        Output of :func:`src.smallworld.real_network.smallworldness_sigma`.
+
+    Returns
+    -------
+    str
+        A complete, UTF-8 HTML document ready to be saved or embedded.
+    """
+    best_idx = next(
+        i for i, t in enumerate(fit_result["beta_curve"])
+        if t[0] == fit_result["beta_optimal"]
+    )
+    return _render(
+        "facebook_analysis.html",
+        beta_curve_json = json.dumps(fit_result["beta_curve"]),
+        L_real_norm     = round(fit_result["L_real_norm"], 6),
+        C_real_norm     = round(fit_result["C_real_norm"], 6),
+        best_idx        = best_idx,
+        beta_optimal    = f"{fit_result['beta_optimal']:.4f}",
+        C_ratio         = round(sigma_result["C_real"] / sigma_result["C_rand"], 4),
+        L_ratio         = round(sigma_result["L_real"] / sigma_result["L_rand"], 4),
+        sigma           = f"{sigma_result['sigma']:.2f}",
+        N               = fit_result["N"],
+        k               = fit_result["k"],
+        C_real          = f"{sigma_result['C_real']:.4f}",
+        L_real          = f"{sigma_result['L_real']:.4f}",
+    )
+
+
+def save_facebook_visualization(
+    fit_result: dict,
+    sigma_result: dict,
+    path: str | Path,
+) -> Path:
+    """Write the Facebook analysis visualisation HTML to *path*.
+
+    Parameters
+    ----------
+    fit_result : dict
+        Output of :func:`src.smallworld.real_network.fit_ws`.
+    sigma_result : dict
+        Output of :func:`src.smallworld.real_network.smallworldness_sigma`.
+    path : str or Path
+        Destination ``.html`` file.
+
+    Returns
+    -------
+    Path
+        The path the file was written to.
+    """
+    path = Path(path)
+    path.write_text(
+        build_facebook_visualization(fit_result, sigma_result),
         encoding="utf-8",
     )
     return path

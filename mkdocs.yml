@@ -9,7 +9,6 @@ theme:
   name: material
   language: en
   features:
-    - navigation.instant
     - navigation.tabs
     - navigation.sections
     - navigation.top
@@ -37,6 +36,7 @@ theme:
 nav:
   - Home: index.md
   - Theory: theory.md
+  - Real Network: real_network.md
   - Explore: explore.md
   - API Reference:
       - Networks: api/networks.md

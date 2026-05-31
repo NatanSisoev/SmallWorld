@@ -11,7 +11,11 @@ window.MathJax = {
   }
 };
 
-/* Re-typeset on each instant-navigation page swap (mkdocs-material). */
+/* Typeset once the DOM is ready (mkdocs-material document$ hook). With full
+ * page reloads (navigation.instant disabled) MathJax v3 auto-typesets on load;
+ * this guarded hook is idempotent and harmless. */
 document$.subscribe(() => {
-  MathJax.startup.promise.then(() => MathJax.typesetPromise());
+  if (window.MathJax && MathJax.typesetPromise) {
+    MathJax.typesetPromise();
+  }
 });
