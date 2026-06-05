@@ -19,19 +19,37 @@ and visualised interactively with [pyvis](https://pyvis.readthedocs.io/)
 ```
 SmallWorld/
 ├── README.md
+├── LICENSE
+├── Makefile                          # install / docs / test shortcuts
 ├── requirements.txt
-├── src/smallworld/               # reusable library code
-│   ├── networks.py               # build_ring, build_er, build_ws
-│   ├── metrics.py                # L, C, β-sweep
-│   ├── walks.py                  # random walk, cover time, mixing time
-│   └── plotting.py               # shared figure styling
-├── notebooks/                    # experiments - run in order
-│   ├── 01_visualise_networks.ipynb
-│   ├── 02_basic_metrics.ipynb
-│   ├── 03_small_world_window.ipynb
-│   └── 04_random_walks.ipynb
-├── figures/                      # generated plots
-└── informe/                      # final report
+├── pytest.ini
+├── mkdocs.yml                        # documentation site config
+├── src/smallworld/                   # reusable library code
+│   ├── networks.py                   # build_ring, build_er, build_ws (hand-built)
+│   ├── networks_nx.py                # NetworkX reference builders (for equivalence tests)
+│   ├── calculate_metrics.py          # camí_mig (L), coef_clusterització (C)
+│   ├── simulation.py                 # random walk, stationary dist., cover & mixing time
+│   ├── plotting.py                   # static + pyvis figures
+│   ├── visualization.py              # interactive HTML visualisations
+│   ├── real_network.py               # Facebook network: σ small-worldness, WS fitting
+│   └── templates/                    # HTML templates for the interactive pages
+├── notebooks/                        # experiments - run in order
+│   ├── 01_visualise_networks.ipynb   # build & draw the three networks + walks
+│   ├── 02_small_world_window.ipynb   # L and C vs β and k: the small-world window
+│   └── 03_spectral_analysis.ipynb    # spectral gap / mixing analysis
+├── scripts/
+│   └── build_examples.py             # generate the documentation's interactive HTML examples
+├── tests/                            # unit tests (pytest)
+│   ├── test_unit_calculate_metrics.py
+│   └── test_unit_simulation.py
+├── data/                             # cached computation results
+│   ├── metrics_analytics_data.json
+│   └── facebook_cache.json
+├── docs/                             # MkDocs documentation site
+│   ├── index.md, theory.md, real_network.md, explore.md
+│   ├── api/                          # API reference pages
+│   └── examples/                     # generated interactive HTML
+└── figures/                          # generated plots
 ```
 
 ## Setup
