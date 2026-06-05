@@ -1,4 +1,4 @@
-"""Hand-written implementations of the two Watts–Strogatz metrics.
+"""Hand-written implementations of the two Watts-Strogatz metrics.
 
 This module computes, from scratch, the two structural quantities used
 throughout the project:
@@ -14,16 +14,15 @@ The function names are kept in Catalan because the unit tests in
 ``tests/test_unit_calculate_metrics.py`` import them by name; only the
 docstrings, comments and report-side text are in English.
 
-A NetworkX :class:`~networkx.Graph` is used only as a container; the
-shortest-path search itself relies on the BFS helper
-:func:`networkx.single_source_shortest_path_length`, which matches the
-behaviour of our hand-rolled BFS but is implemented in C and therefore
-fast enough for the ``N = 1000`` sweeps used by the *Metric analytics*
-page in the documentation.
+NetworkX :class:`~networkx.Graph` is used only as a container.  The BFS
+for shortest paths and the triangle / two-path counts for clustering are
+implemented directly here, so the module follows the project's
+"by-hand core algorithms" convention.
 """
 
+from collections import deque
+
 import networkx as nx
-import numpy as np
 from src.smallworld.networks import build_all
 
 
@@ -59,24 +58,39 @@ def camí_mig(G: nx.Graph) -> float:
     """
 
     # If the graph is disconnected, restrict to its largest connected
-    # component — otherwise we would have d(i, j) = ∞ for some pairs.
+    # component; otherwise some pairwise distances would be infinite.
     if not nx.is_connected(G):
         G = G.subgraph(max(nx.connected_components(G), key=len))
-        print("The graph is not connected...")
-        print("Falling back to the largest connected component...\n")
+
+    N = G.number_of_nodes()
+    if N <= 1:
+        return 0.0
 
     total = 0
 
     for node in G.nodes():
-        # Dictionary {target: shortest distance} obtained by BFS.
-        distances = nx.single_source_shortest_path_length(G, node)
+        distances = _bfs_distances(G, node)
         total += sum(distances.values())
-
-    N = G.number_of_nodes()
 
     # Each (ordered) pair is visited exactly once, so the total number
     # of contributions is N * (N - 1).
     return total / (N * (N - 1))
+
+
+def _bfs_distances(G: nx.Graph, source: int) -> dict[int, int]:
+    """Shortest-path distances from ``source`` using a hand-written BFS."""
+    distances = {source: 0}
+    queue = deque([source])
+
+    while queue:
+        node = queue.popleft()
+        next_distance = distances[node] + 1
+        for neighbor in G.neighbors(node):
+            if neighbor not in distances:
+                distances[neighbor] = next_distance
+                queue.append(neighbor)
+
+    return distances
 
 
 def nodes_within_distance(G: nx.Graph, node: int, dist: int) -> list:
@@ -144,36 +158,25 @@ def coef_clusterització(G: nx.Graph) -> float:
         :func:`networkx.transitivity` (verified by the unit tests).
     """
 
-    num_triangles = 0
+    neighbor_sets = {node: set(G.neighbors(node)) for node in G.nodes()}
+    closed_two_paths = 0
+    total_two_paths = 0
 
-    for node in G.nodes():
-        nodes = nodes_within_distance(G, node, 3)
-        for x in nodes:
-            if x == node:
-                num_triangles += 1
+    for center, neighbors_set in neighbor_sets.items():
+        neighbors = list(neighbors_set)
+        degree = len(neighbors)
+        total_two_paths += degree * (degree - 1)
 
-    # Every triangle is counted six times: once per vertex × two
-    # directions of traversal.
-    num_triangles = num_triangles // 6
+        for i, u in enumerate(neighbors):
+            for v in neighbors[i + 1:]:
+                if v in neighbor_sets[u]:
+                    # The unordered pair (u, v) gives two oriented
+                    # length-2 paths through ``center``.
+                    closed_two_paths += 2
 
-    camins_long_2 = 0
-
-    for node in G.nodes():
-        num_neighbors = len(nodes_within_distance(G, node, 1))
-        nodes = nodes_within_distance(G, node, 2)
-
-        # From distance-1 neighbours we expand to distance-2 endpoints,
-        # then subtract the walks that bounce back to the source.
-        camins_long_2 += len(nodes) - num_neighbors
-
-    # Each length-2 path is counted twice (once in each direction).
-    camins_long_2 = camins_long_2 // 2
-
-    # Each triangle contains three length-2 paths, hence the factor 3
-    # in the numerator.
-    coef = 3 * num_triangles / camins_long_2
-
-    return coef
+    if total_two_paths == 0:
+        return 0.0
+    return closed_two_paths / total_two_paths
 
 
 if __name__ == "__main__":

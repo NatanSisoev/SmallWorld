@@ -292,13 +292,13 @@ def mixing_time(
     distribution converges (within tolerance *tol*) to the stationary
     distribution :math:`\\pi(v) = \\deg(v) / 2|E|`.
 
-    Convergence is tracked via the :math:`\\ell^\\infty` norm between
-    consecutive distributions:
+    Convergence is tracked via total-variation distance to the stationary
+    distribution:
 
     .. math::
 
         t_{\\mathrm{mix}} =
-            \\min\\bigl\\{t : \\|\\mathbf{p}_t - \\mathbf{p}_{t+1}\\|_{\\infty}
+            \\min\\bigl\\{t : \\tfrac12\\|\\mathbf{p}_t - \\pi\\|_1
             < \\varepsilon \\bigr\\}
 
     Parameters
@@ -327,6 +327,7 @@ def mixing_time(
     """
     rng = np.random.default_rng(seed)
     P, n = build_transition_matrix(G)
+    pi = stationary_distribution(G)
 
     results: dict[int, dict] = {}
     for sim in range(n_simulations):
@@ -334,18 +335,27 @@ def mixing_time(
         p = rng.random(n)
         p /= p.sum()
 
-        for t in range(max_iter):
-            p_next = P @ p
-            if np.max(np.abs(p - p_next)) < tol:
-                results[sim] = {"iters": t, "distribution": p_next}
+        for t in range(1, max_iter + 1):
+            p = P @ p
+            tv_distance = 0.5 * float(np.sum(np.abs(p - pi)))
+            if tv_distance < tol:
+                results[sim] = {
+                    "iters": t,
+                    "distribution": p,
+                    "tv_distance": tv_distance,
+                }
                 break
-            p = p_next
         else:
             warnings.warn(
                 f"Simulation {sim} did not converge within {max_iter} iterations.",
                 stacklevel=2,
             )
-            results[sim] = {"iters": max_iter, "distribution": p}
+            tv_distance = 0.5 * float(np.sum(np.abs(p - pi)))
+            results[sim] = {
+                "iters": max_iter,
+                "distribution": p,
+                "tv_distance": tv_distance,
+            }
 
     avg_iters = float(np.mean([results[s]["iters"] for s in results]))
     return results, avg_iters

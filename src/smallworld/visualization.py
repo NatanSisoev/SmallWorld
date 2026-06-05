@@ -352,12 +352,10 @@ def compute_metrics_data(
 
     Used internally by :func:`build_metrics_analytics_visualization`.
 
-    The clustering coefficient is :func:`networkx.transitivity`, which is
-    numerically identical to the project's :func:`coef_clusterització`
-    (verified by the unit tests) but fast enough to use at ``N = 1000``.
-    The average path length :math:`L` is computed on the largest connected
-    component when the graph is disconnected (typical for ER at small ``k``),
-    matching the convention of :func:`camí_mig`.
+    Both metrics are routed through the project's own hand-written
+    implementations.  The average path length :math:`L` is computed on the
+    largest connected component when the graph is disconnected (typical for
+    ER at small ``k``), matching the convention of :func:`camí_mig`.
 
     Parameters
     ----------
@@ -377,16 +375,14 @@ def compute_metrics_data(
         network name (``"ring"``, ``"er"``, ``"ws"``).  For ``"ws"`` the
         inner level is keyed by ``str(beta)`` and holds ``{"L": …, "C": …}``.
     """
+    from src.smallworld.calculate_metrics import camí_mig, coef_clusterització
     from src.smallworld.networks import build_er, build_ring, build_ws
 
     def safe_apl(G: nx.Graph) -> float:
-        if not nx.is_connected(G):
-            largest = max(nx.connected_components(G), key=len)
-            G = G.subgraph(largest).copy()
-        return float(nx.average_shortest_path_length(G))
+        return float(camí_mig(G))
 
     def safe_C(G: nx.Graph) -> float:
-        return float(nx.transitivity(G))
+        return float(coef_clusterització(G))
 
     out: dict = {}
     for k in k_values:
