@@ -352,10 +352,10 @@ def compute_metrics_data(
 
     Used internally by `build_metrics_analytics_visualization`.
 
-    Both metrics are routed through the project's own hand-written
-    implementations.  The average path length $L$ is computed on the
-    largest connected component when the graph is disconnected (typical for
-    ER at small ``k``), matching the convention of `camí_mig`.
+    Uses NetworkX implementations for performance. The average path length $L$
+    is computed on the largest connected component when the graph is
+    disconnected (typical for ER at small ``k``), matching the convention of
+    `average_path_length`.
 
     Parameters
     ----------
@@ -375,14 +375,18 @@ def compute_metrics_data(
         network name (``"ring"``, ``"er"``, ``"ws"``).  For ``"ws"`` the
         inner level is keyed by ``str(beta)`` and holds ``{"L": …, "C": …}``.
     """
-    from src.smallworld.calculate_metrics import camí_mig, coef_clusterització
     from src.smallworld.networks import build_er, build_ring, build_ws
 
-    def safe_apl(G: nx.Graph) -> float:
-        return float(camí_mig(G))
+    def compute_apl(G: nx.Graph) -> float:
+        """Average path length, handling disconnected graphs."""
+        if not nx.is_connected(G):
+            largest = max(nx.connected_components(G), key=len)
+            G = G.subgraph(largest).copy()
+        return float(nx.average_shortest_path_length(G))
 
-    def safe_C(G: nx.Graph) -> float:
-        return float(coef_clusterització(G))
+    def compute_C(G: nx.Graph) -> float:
+        """Global clustering coefficient (transitivity)."""
+        return float(nx.transitivity(G))
 
     out: dict = {}
     for k in k_values:
@@ -390,15 +394,15 @@ def compute_metrics_data(
         Gr = build_ring(N, k, seed=seed)
         Ge = build_er(N, k, seed=seed)
         entry = {
-            "ring": {"L": safe_apl(Gr), "C": safe_C(Gr)},
-            "er":   {"L": safe_apl(Ge), "C": safe_C(Ge)},
+            "ring": {"L": compute_apl(Gr), "C": compute_C(Gr)},
+            "er":   {"L": compute_apl(Ge), "C": compute_C(Ge)},
             "ws":   {},
         }
         for beta in betas:
             Gw = build_ws(N, k, beta, seed=seed)
             # `:g` matches JS's Number.toString format (no trailing ".0"),
             # so the lookup in the embedded JS works for every β.
-            entry["ws"][f"{beta:g}"] = {"L": safe_apl(Gw), "C": safe_C(Gw)}
+            entry["ws"][f"{beta:g}"] = {"L": compute_apl(Gw), "C": compute_C(Gw)}
         out[str(k)] = entry
         print("done")
     return out

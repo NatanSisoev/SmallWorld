@@ -1,23 +1,14 @@
-r"""Hand-written implementations of the two Watts-Strogatz metrics.
+"""Hand-written implementations of the two Watts-Strogatz metrics.
 
 This module computes, from scratch, the two structural quantities used
 throughout the project:
 
-* `camí_mig` — average shortest-path length $L$.
-* `coef_clusterització` — global clustering coefficient
+* `average_path_length` — average shortest-path length $L$.
+* `clustering_coefficient` — global clustering coefficient
   (transitivity) $C = 3 \cdot \#\text{triangles} / \#\text{paths of length 2}$.
-* `nodes_within_distance` — internal helper used by the
+* `nodes_at_distance` — internal helper used by the
   clustering routine; returns the multiset of nodes reachable in
   exactly ``dist`` steps from a source node (counted with multiplicity).
-
-The function names are kept in Catalan because the unit tests in
-``tests/test_unit_calculate_metrics.py`` import them by name; only the
-docstrings, comments and report-side text are in English.
-
-`networkx.Graph` is used only as a container.  The BFS
-for shortest paths and the triangle / two-path counts for clustering are
-implemented directly here, so the module follows the project's
-"by-hand core algorithms" convention.
 """
 
 from collections import deque
@@ -26,7 +17,7 @@ import networkx as nx
 from src.smallworld.networks import build_all
 
 
-def camí_mig(G: nx.Graph) -> float:
+def average_path_length(G: nx.Graph) -> float:
     r"""Average shortest-path length $L$ of ``G``.
 
     Computed as
@@ -58,8 +49,6 @@ def camí_mig(G: nx.Graph) -> float:
     algorithms" convention.
     """
 
-    # If the graph is disconnected, restrict to its largest connected
-    # component; otherwise some pairwise distances would be infinite.
     if not nx.is_connected(G):
         G = G.subgraph(max(nx.connected_components(G), key=len))
 
@@ -73,8 +62,6 @@ def camí_mig(G: nx.Graph) -> float:
         distances = _bfs_distances(G, node)
         total += sum(distances.values())
 
-    # Each (ordered) pair is visited exactly once, so the total number
-    # of contributions is N * (N - 1).
     return total / (N * (N - 1))
 
 
@@ -94,13 +81,13 @@ def _bfs_distances(G: nx.Graph, source: int) -> dict[int, int]:
     return distances
 
 
-def nodes_within_distance(G: nx.Graph, node: int, dist: int) -> list:
+def nodes_at_distance(G: nx.Graph, node: int, dist: int) -> list:
     """Return all nodes reachable from ``node`` in exactly ``dist`` steps.
 
     Walks expand one hop at a time, collecting neighbours **with
     multiplicity** — a node visited along two different length-``dist``
     walks therefore appears twice. This multiplicity is what
-    `coef_clusterització` relies on to count length-2 paths.
+    `clustering_coefficient` relies on to count length-2 paths.
 
     Parameters
     ----------
@@ -134,7 +121,7 @@ def nodes_within_distance(G: nx.Graph, node: int, dist: int) -> list:
     return neighbors
 
 
-def coef_clusterització(G: nx.Graph) -> float:
+def clustering_coefficient(G: nx.Graph) -> float:
     r"""Global clustering coefficient (transitivity) of ``G``.
 
     Defined as
@@ -172,8 +159,6 @@ def coef_clusterització(G: nx.Graph) -> float:
         for i, u in enumerate(neighbors):
             for v in neighbors[i + 1:]:
                 if v in neighbor_sets[u]:
-                    # The unordered pair (u, v) gives two oriented
-                    # length-2 paths through ``center``.
                     closed_two_paths += 2
 
     if total_two_paths == 0:
@@ -191,8 +176,8 @@ if __name__ == "__main__":
 
     for graph in graphs:
         metrics[graph] = {}
-        metrics[graph]["L"] = camí_mig(graphs[graph])
-        metrics[graph]["C"] = coef_clusterització(graphs[graph])
+        metrics[graph]["L"] = average_path_length(graphs[graph])
+        metrics[graph]["C"] = clustering_coefficient(graphs[graph])
         print(f"Average path length for graph '{graph}': {metrics[graph]['L']:.4f}")
         print(f"Clustering coefficient for graph '{graph}': {metrics[graph]['C']:.4f}")
         print("\n---------------------------------------\n")
