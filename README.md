@@ -13,6 +13,7 @@ and simulate random walks to estimate cover time and mixing time.
 Networks are built and analysed with [NetworkX](https://networkx.org/),
 and visualised interactively with [pyvis](https://pyvis.readthedocs.io/)
 (HTML/JavaScript output, lets you zoom and drag nodes around).
+Numerical work uses NumPy/SciPy; plots are made with Matplotlib.
 
 ## Structure
 
@@ -55,7 +56,8 @@ SmallWorld/
 
 ## Setup
 
-Create a virtual environment:
+Requires **Python 3.10+**. It is recommended to work inside a virtual
+environment to keep dependencies isolated:
 
 ```bash
 python -m venv .venv
@@ -63,19 +65,19 @@ python -m venv .venv
 source .venv/bin/activate  # on macOS/Linux
 ```
 
-Then install and serve:
+Then install and launch the docs:
 
 ```bash
 make install      # installs dependencies from requirements.txt
 make docs-serve   # live-reloading docs at http://localhost:8000
 ```
 
-Then open the docs in a browser, or run the notebooks in `notebooks/`
-in numerical order. To build a static site for distribution, run
-`make docs` — output goes to `site/`.
-
 Without `make`, the same commands work directly: `pip install -r
-requirements.txt`, `python -m mkdocs serve`.
+requirements.txt`, then `python -m mkdocs serve`.
+
+To run the notebooks, open them in VS Code (which has built-in Jupyter
+support) or run `jupyter notebook` from the project folder after
+installing Jupyter (`pip install jupyter`).
 
 ## Authors
 
