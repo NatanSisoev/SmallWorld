@@ -1,19 +1,19 @@
-"""Random-walk simulation on small-world networks.
+r"""Random-walk simulation on small-world networks.
 
 Provides hand-written implementations of the three core random-walk
 quantities studied in the course:
 
-* :func:`random_walk_step` / :func:`random_walk` — basic walk primitives.
-* :func:`stationary_distribution`               — exact π(v) = deg(v) / 2|E|.
-* :func:`build_transition_matrix`               — column-stochastic matrix P.
-* :func:`cover_time`                            — Monte-Carlo cover-time estimate.
-* :func:`mixing_time`                           — matrix-iteration mixing-time estimate.
+* `random_walk_step` / `random_walk` — basic walk primitives.
+* `stationary_distribution` — exact $\pi(v) = \deg(v) / 2|E|$.
+* `build_transition_matrix` — column-stochastic matrix P.
+* `cover_time` — Monte-Carlo cover-time estimate.
+* `mixing_time` — matrix-iteration mixing-time estimate.
 
-All stochastic functions accept a ``seed`` argument (or an
-:class:`numpy.random.Generator`) for reproducibility.
+All stochastic functions accept a ``seed`` argument (or a
+`numpy.random.Generator`) for reproducibility.
 
-Plotting helpers (:func:`plot_cover_time`,
-:func:`plot_mixing_time_distribution`) live in :mod:`src.smallworld.plotting`.
+Plotting helpers (`plot_cover_time`,
+`plot_mixing_time_distribution`) live in `src.smallworld.plotting`.
 """
 
 from __future__ import annotations
@@ -107,6 +107,12 @@ def random_walk(
     -------
     list[int]
         Sequence of nodes visited *after* the start (length ``n_steps``).
+
+    Raises
+    ------
+    ValueError
+        If any node reached during the walk is isolated (no neighbours).
+        Use a connected graph to avoid this.
     """
     if isinstance(rng, (int, np.integer)):
         rng = np.random.default_rng(int(rng))
@@ -123,16 +129,20 @@ def random_walk(
 # ---------------------------------------------------------------------------
 
 def stationary_distribution(G: nx.Graph) -> npt.NDArray[np.float64]:
-    """Compute the exact stationary distribution for a random walk on *G*.
+    r"""Compute the exact stationary distribution for a random walk on *G*.
 
-    For any undirected graph the stationary distribution is
+    For any undirected graph the stationary distribution is:
 
-    .. math::
+    $$\pi(v) = \frac{\deg(v)}{2|E|}$$
 
-        \\pi(v) = \\frac{\\deg(v)}{2|E|}
+    For a *k*-regular graph this reduces to the uniform distribution:
+    $\pi(v) = 1/N$.
 
-    For a *k*-regular graph this reduces to the uniform distribution
-    ``π(v) = 1/N``.
+    Notes
+    -----
+    If the graph has no edges at all (all nodes isolated), the function
+    returns a uniform distribution over all nodes as a safe fallback.
+    Nodes are assumed to be labelled ``0, 1, ..., N-1`` in sorted order.
 
     Parameters
     ----------
@@ -142,7 +152,7 @@ def stationary_distribution(G: nx.Graph) -> npt.NDArray[np.float64]:
     Returns
     -------
     numpy.ndarray, shape (N,)
-        Probability vector indexed by node label (assumes ``0 … N-1``).
+        Probability vector $\pi$ indexed by node label, summing to 1.
     """
     degrees = np.array([G.degree(v) for v in sorted(G.nodes())], dtype=float)
     total = degrees.sum()
@@ -158,20 +168,18 @@ def stationary_distribution(G: nx.Graph) -> npt.NDArray[np.float64]:
 def build_transition_matrix(
     G: nx.Graph,
 ) -> tuple[npt.NDArray[np.float64], int]:
-    """Build the column-stochastic transition matrix for a random walk on *G*.
+    r"""Build the column-stochastic transition matrix for a random walk on *G*.
 
-    Entry :math:`P_{ij}` is the probability of moving **from** node :math:`j`
-    **to** node :math:`i` in one step:
+    Entry $P_{ij}$ is the probability of moving **from** node $j$
+    **to** node $i$ in one step:
 
-    .. math::
-
-        P_{ij} = \\begin{cases}
-            1/\\deg(j) & (i,j)\\in E \\\\
-            0          & \\text{otherwise}
-        \\end{cases}
+    $$P_{ij} = \begin{cases}
+    1/\deg(j) & (i,j) \in E \\
+    0         & \text{otherwise}
+    \end{cases}$$
 
     For a *k*-regular graph the stationary distribution is uniform:
-    :math:`\\pi(v) = 1/N`.
+    $\pi(v) = 1/N$.
 
     Parameters
     ----------
@@ -205,21 +213,19 @@ def cover_time(
     seed: int | None = None,
     max_iter: int = 100_000,
 ) -> tuple[list[int], float]:
-    """Estimate the cover time of *G* by Monte-Carlo simulation.
+    r"""Estimate the cover time of *G* by Monte-Carlo simulation.
 
-    The **cover time** :math:`C(G)` is the expected number of steps a random
-    walk needs to visit every node at least once.  This function approximates
+    The **cover time** $C(G)$ is the expected number of steps a random
+    walk needs to visit every node at least once. This function approximates
     it by averaging over many independent simulations, each started from a
     uniformly random non-isolated node.
 
     Empirical scaling laws:
 
-    ============ ================================
-    Graph        Scaling
-    ============ ================================
-    Ring lattice :math:`\\Theta(N^2)`
-    ER / WS      :math:`\\Theta(N \\log N)`
-    ============ ================================
+    | Graph | Scaling |
+    |-------|---------|
+    | Ring lattice | $\Theta(N^2)$ |
+    | ER / WS | $\Theta(N \log N)$ |
 
     Parameters
     ----------
@@ -231,7 +237,7 @@ def cover_time(
         Seed for the random-number generator.
     max_iter : int, default 100 000
         Hard step limit per simulation.  Walks that reach this limit are
-        counted as ``max_iter`` steps and a :class:`UserWarning` is raised.
+        counted as ``max_iter`` steps and a `UserWarning` is raised.
 
     Returns
     -------
@@ -286,31 +292,27 @@ def mixing_time(
     tol: float = 1e-5,
     max_iter: int = 10_000,
 ) -> tuple[dict[int, dict], float]:
-    """Estimate the mixing time of *G* by iterated matrix–vector products.
+    r"""Estimate the mixing time of *G* by iterated matrix–vector products.
 
     The **mixing time** measures how many steps a random walk needs before its
     distribution converges (within tolerance *tol*) to the stationary
-    distribution :math:`\\pi(v) = \\deg(v) / 2|E|`.
+    distribution $\pi(v) = \deg(v) / 2|E|$.
 
     Convergence is tracked via total-variation distance to the stationary
     distribution:
 
-    .. math::
-
-        t_{\\mathrm{mix}} =
-            \\min\\bigl\\{t : \\tfrac12\\|\\mathbf{p}_t - \\pi\\|_1
-            < \\varepsilon \\bigr\\}
+    $$t_{\mathrm{mix}} = \min\bigl\{t : \tfrac12\|\mathbf{p}_t - \pi\|_1 < \varepsilon \bigr\}$$
 
     Parameters
     ----------
     G : networkx.Graph
         Graph whose mixing time is to be estimated.
     n_simulations : int
-        Number of independent runs (each uses a fresh random :math:`\\mathbf{p}_0`).
+        Number of independent runs (each uses a fresh random $\mathbf{p}_0$).
     seed : int, optional
         Seed for the random-number generator.
     tol : float, default 1e-5
-        Convergence tolerance :math:`\\varepsilon`.
+        Convergence tolerance $\varepsilon$.
     max_iter : int, default 10 000
         Maximum number of matrix–vector multiplications per simulation.
 

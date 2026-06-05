@@ -1,12 +1,12 @@
-"""Hand-written implementations of the two Watts-Strogatz metrics.
+r"""Hand-written implementations of the two Watts-Strogatz metrics.
 
 This module computes, from scratch, the two structural quantities used
 throughout the project:
 
-* :func:`camí_mig`            — average shortest-path length :math:`L`.
-* :func:`coef_clusterització` — global clustering coefficient
-  (transitivity) :math:`C = 3 \\cdot \\#\\text{triangles} / \\#\\text{paths of length 2}`.
-* :func:`nodes_within_distance` — internal helper used by the
+* `camí_mig` — average shortest-path length $L$.
+* `coef_clusterització` — global clustering coefficient
+  (transitivity) $C = 3 \cdot \#\text{triangles} / \#\text{paths of length 2}$.
+* `nodes_within_distance` — internal helper used by the
   clustering routine; returns the multiset of nodes reachable in
   exactly ``dist`` steps from a source node (counted with multiplicity).
 
@@ -14,7 +14,7 @@ The function names are kept in Catalan because the unit tests in
 ``tests/test_unit_calculate_metrics.py`` import them by name; only the
 docstrings, comments and report-side text are in English.
 
-NetworkX :class:`~networkx.Graph` is used only as a container.  The BFS
+`networkx.Graph` is used only as a container.  The BFS
 for shortest paths and the triangle / two-path counts for clustering are
 implemented directly here, so the module follows the project's
 "by-hand core algorithms" convention.
@@ -27,18 +27,16 @@ from src.smallworld.networks import build_all
 
 
 def camí_mig(G: nx.Graph) -> float:
-    """Average shortest-path length :math:`L` of ``G``.
+    r"""Average shortest-path length $L$ of ``G``.
 
     Computed as
 
-    .. math::
+    $$L = \frac{1}{N(N-1)} \sum_{i \neq j} d(i, j)$$
 
-        L \\;=\\; \\frac{1}{N(N-1)} \\sum_{i \\neq j} d(i, j),
-
-    where :math:`d(i, j)` is the shortest-path distance found by BFS.
-    If ``G`` is disconnected the function falls back to the **largest
-    connected component**, because otherwise some pairwise distances
-    would be infinite and :math:`L` undefined.
+    where $d(i, j)$ is the shortest-path distance found by a hand-written
+    BFS. If ``G`` is disconnected the function silently restricts to the
+    **largest connected component**, because otherwise some pairwise
+    distances would be infinite and $L$ undefined.
 
     Parameters
     ----------
@@ -48,13 +46,16 @@ def camí_mig(G: nx.Graph) -> float:
     Returns
     -------
     float
-        The average shortest-path length over all ordered pairs
-        ``(i, j)`` with ``i != j`` in the (largest) connected component.
+        Average shortest-path length over all ordered pairs ``(i, j)``
+        with ``i != j`` in the (largest) connected component.
+        Returns ``0.0`` for a single-node component.
 
     Notes
     -----
-    Equivalent to :func:`networkx.average_shortest_path_length` on a
-    connected input (verified by the unit tests).
+    On a connected graph this is equivalent to
+    `networkx.average_shortest_path_length` (verified by the unit tests).
+    The BFS is hand-written as required by the project's "by-hand core
+    algorithms" convention.
     """
 
     # If the graph is disconnected, restrict to its largest connected
@@ -99,7 +100,7 @@ def nodes_within_distance(G: nx.Graph, node: int, dist: int) -> list:
     Walks expand one hop at a time, collecting neighbours **with
     multiplicity** — a node visited along two different length-``dist``
     walks therefore appears twice. This multiplicity is what
-    :func:`coef_clusterització` relies on to count length-2 paths.
+    `coef_clusterització` relies on to count length-2 paths.
 
     Parameters
     ----------
@@ -108,14 +109,16 @@ def nodes_within_distance(G: nx.Graph, node: int, dist: int) -> list:
     node : int
         Source node.
     dist : int
-        Number of steps to take. Must be ``>= 1``.
+        Number of hops to take. Pass ``1`` to get immediate neighbours
+        (identical to ``list(G.neighbors(node))``). Pass ``2`` to get
+        all length-2 walk endpoints (with multiplicity) for clustering.
 
     Returns
     -------
     list[int]
-        The multiset of endpoints of every length-``dist`` walk that
-        starts at ``node``. May contain duplicates and may contain
-        ``node`` itself when ``dist >= 2``.
+        Multiset of walk endpoints after exactly ``dist`` hops from
+        ``node``. May contain duplicates and may contain ``node`` itself
+        when ``dist >= 2``.
     """
 
     neighbors = list(G.neighbors(node))
@@ -132,14 +135,11 @@ def nodes_within_distance(G: nx.Graph, node: int, dist: int) -> list:
 
 
 def coef_clusterització(G: nx.Graph) -> float:
-    """Global clustering coefficient (transitivity) of ``G``.
+    r"""Global clustering coefficient (transitivity) of ``G``.
 
     Defined as
 
-    .. math::
-
-        C \\;=\\; \\frac{3 \\cdot \\#\\text{triangles}}
-                       {\\#\\text{paths of length 2}},
+    $$C = \frac{3 \cdot \#\text{triangles}}{\#\text{paths of length 2}}$$
 
     i.e. the fraction of length-2 paths that close into a triangle.
     This is the *global* (transitivity) definition, **not** the
@@ -154,8 +154,10 @@ def coef_clusterització(G: nx.Graph) -> float:
     Returns
     -------
     float
-        The global clustering coefficient. Equivalent to
-        :func:`networkx.transitivity` (verified by the unit tests).
+        The global clustering coefficient in ``[0, 1]``. Returns ``0.0``
+        if the graph has no paths of length 2 (e.g. a tree with all
+        nodes of degree ≤ 1). Equivalent to `networkx.transitivity`
+        (verified by the unit tests).
     """
 
     neighbor_sets = {node: set(G.neighbors(node)) for node in G.nodes()}

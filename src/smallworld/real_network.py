@@ -3,10 +3,10 @@
 Loads the Facebook ego-network dataset and applies the small-world pipeline
 to a real-world graph:
 
-* :func:`load_facebook`        — download / load the SNAP edge-list.
-* :func:`smallworldness_sigma` — compute the σ small-worldness coefficient.
-* :func:`fit_ws`               — find the WS(N, k, β) equivalent.
-* :func:`plot_fitting_curve`   — visualise the β-fitting result.
+* `load_facebook` — download / load the SNAP edge-list.
+* `smallworldness_sigma` — compute the σ small-worldness coefficient.
+* `fit_ws` — find the WS(N, k, β) equivalent.
+* `plot_fitting_curve` — visualise the β-fitting result.
 
 Dataset: J. McAuley and J. Leskovec. Learning to Discover Social Circles
 in Ego Networks. NIPS, 2012.
@@ -107,18 +107,15 @@ def smallworldness_sigma(
     seed: int | None = 42,
     n_apl_samples: int = 500,
 ) -> dict:
-    """Compute the σ small-worldness coefficient for *G*.
+    r"""Compute the σ small-worldness coefficient for *G*.
 
-    .. math::
+    $$\sigma = \frac{C_{\text{real}} / C_{\text{rand}}}{L_{\text{real}} / L_{\text{rand}}}$$
 
-        \\sigma = \\frac{C_{\\text{real}} / C_{\\text{rand}}}
-                        {L_{\\text{real}} / L_{\\text{rand}}}
-
-    :math:`C_{\\text{rand}}` and :math:`L_{\\text{rand}}` are averages over
+    $C_{\text{rand}}$ and $L_{\text{rand}}$ are averages over
     *n_random* Erdős–Rényi graphs with the same *N* and edge probability
-    :math:`p = 2|E| / (N(N-1))`.
+    $p = 2|E| / (N(N-1))$.
 
-    :math:`L` is estimated by BFS from *n_apl_samples* random source nodes
+    $L$ is estimated by BFS from *n_apl_samples* random source nodes
     (sampling is necessary for large graphs where all-pairs shortest paths
     would be too slow).
 
@@ -317,16 +314,18 @@ def plot_fitting_curve(
     Parameters
     ----------
     fit_result : dict
-        Output of :func:`fit_ws`.
+        Output of `fit_ws`.
     sigma_result : dict
-        Output of :func:`smallworldness_sigma`.
+        Output of `smallworldness_sigma`.
     save_path : str or Path, optional
         If given, saves the figure at 150 dpi.
 
     Returns
     -------
     fig : matplotlib.figure.Figure
+        The figure containing both subplots.
     axes : tuple of matplotlib.axes.Axes
+        The two subplot axes ``(ax1, ax2)``.
     """
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
 

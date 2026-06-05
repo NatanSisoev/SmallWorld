@@ -2,17 +2,15 @@
 
 Static and interactive visualisation:
 
-* :func:`draw_networks_grid` — side-by-side matplotlib figure, one subplot
+* `draw_networks_grid` — side-by-side matplotlib figure, one subplot
   per network.  Used for report figures.
-* :func:`to_pyvis` / :func:`save_pyvis` — interactive HTML rendering via
-  :mod:`pyvis`.
-* :func:`plot_cover_time` — histogram of Monte-Carlo cover-time results.
-* :func:`plot_mixing_time_distribution` — bar chart of the stationary
-  distribution estimated by :func:`~src.smallworld.simulation.mixing_time`.
+* `to_pyvis` / `save_pyvis` — interactive HTML rendering via `pyvis`.
+* `plot_cover_time` — histogram of Monte-Carlo cover-time results.
+* `plot_mixing_time_distribution` — bar chart of the stationary
+  distribution estimated by `mixing_time`.
 
 All grid/pyvis helpers accept the ``{"ring", "er", "ws"}`` naming convention
-used by :func:`~src.smallworld.networks.build_all`, but work with any string
-keys.
+used by `build_all`, but work with any string keys.
 """
 
 from __future__ import annotations
@@ -63,15 +61,14 @@ def draw_networks_grid(
     Parameters
     ----------
     graphs : Mapping[str, networkx.Graph]
-        Networks to render, typically the output of
-        :func:`src.networks.build_all`.
+        Networks to render, typically the output of `build_all`.
     layouts : Mapping[str, str], optional
         Per-network layout, either ``"circular"`` or ``"spring"``.
         Defaults to circular for ``ring``/``ws`` and spring for ``er``.
     titles : Mapping[str, str], optional
         Per-network subplot title. Defaults to human-readable names.
     node_size : int, default 80
-        Marker size passed to :func:`networkx.draw_networkx_nodes`.
+        Marker size passed to `networkx.draw_networkx_nodes`.
     figsize : tuple, default ``(15, 5)``
         Matplotlib figure size.
     seed : int, default 42
@@ -83,6 +80,11 @@ def draw_networks_grid(
     -------
     matplotlib.figure.Figure
         The figure object, so the caller can further customise or save.
+
+    Raises
+    ------
+    ValueError
+        If an unknown layout name is passed for any network.
     """
     layouts = dict(_DEFAULT_LAYOUTS, **(layouts or {}))
     titles = dict(_DEFAULT_TITLES, **(titles or {}))
@@ -115,7 +117,7 @@ def to_pyvis(
     physics: bool = False,
     seed: int = 42,
 ):
-    """Build a :class:`pyvis.network.Network` from a NetworkX graph.
+    """Build a `pyvis.network.Network` from a NetworkX graph.
 
     Node positions are pre-computed with a NetworkX layout so the
     rendering is reproducible. Physics simulation is off by default so
@@ -140,8 +142,14 @@ def to_pyvis(
     Returns
     -------
     pyvis.network.Network
-        Call ``.save_graph(path)`` to write the HTML, or ``.show(path)``
-        to display it inline inside a Jupyter notebook.
+        The configured network object. Use `save_pyvis` to write it to
+        disk (UTF-8 safe), or `.show(path)` to display it inside a
+        Jupyter notebook.
+
+    Raises
+    ------
+    ValueError
+        If an unknown layout name is passed.
     """
     from pyvis.network import Network
 
@@ -171,10 +179,10 @@ def save_pyvis(net, path: str | Path) -> Path:
 
     Applies two fixes on top of the raw pyvis output:
 
-    1. **Encoding** — pyvis's :meth:`Network.save_graph` opens the file
+    1. **Encoding** — pyvis's `Network.save_graph` opens the file
        with the system encoding (``cp1252`` on Windows) and crashes on
        non-Latin-1 characters in the bundled JavaScript.  We call
-       :meth:`Network.generate_html` and write with explicit UTF-8.
+       `Network.generate_html` and write with explicit UTF-8.
     2. **Iframe compatibility** — injects a minimal CSS reset so the
        graph fills its ``<iframe>`` container without scrollbars, rather
        than overflowing at the hardcoded ``height: 600px`` default.
@@ -232,8 +240,7 @@ def plot_cover_time(
     Parameters
     ----------
     steps_by_sim : list[int]
-        Raw output from :func:`~src.smallworld.simulation.cover_time` —
-        number of steps for each simulation run.
+        Raw output from `cover_time` — number of steps for each simulation run.
     name_graph : str, optional
         Graph name used in the plot title.
     ax : matplotlib.axes.Axes, optional

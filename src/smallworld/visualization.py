@@ -5,18 +5,18 @@ with a walk-control panel.  The pages are designed to be served as
 ``<iframe>`` embeds inside the MkDocs documentation site.
 
 HTML templates live in ``src/smallworld/templates/`` and use ``@@key@@``
-placeholders.  Python fills them with :func:`_render`.
+placeholders.  Python fills them with `_render`.
 
 The main entry points are:
 
-* :func:`build_walk_visualization`              — HTML for one interactive walk.
-* :func:`save_walk_visualization`               — write it to disk.
-* :func:`build_cover_time_visualization`        — HTML for cover-time histogram.
-* :func:`save_cover_time_visualization`         — write it to disk.
-* :func:`build_compare_times_visualization`     — HTML for side-by-side comparison.
-* :func:`save_compare_times_visualization`      — write it to disk.
-* :func:`build_metrics_analytics_visualization` — HTML for the L/C vs β analytics page.
-* :func:`save_metrics_analytics_visualization`  — write it to disk.
+* `build_walk_visualization` — HTML for one interactive walk.
+* `save_walk_visualization` — write it to disk.
+* `build_cover_time_visualization` — HTML for cover-time histogram.
+* `save_cover_time_visualization` — write it to disk.
+* `build_compare_times_visualization` — HTML for side-by-side comparison.
+* `save_compare_times_visualization` — write it to disk.
+* `build_metrics_analytics_visualization` — HTML for the L/C vs β analytics page.
+* `save_metrics_analytics_visualization` — write it to disk.
 
 Node colour convention
 ----------------------
@@ -118,7 +118,7 @@ def build_walk_visualization(
     -------
     str
         A complete, UTF-8 HTML document.  Save it with
-        :func:`save_walk_visualization` or embed it in an ``<iframe>``.
+        `save_walk_visualization` or embed it in an ``<iframe>``.
     """
     pos = _layout(G, layout, seed=seed, scale=scale)
 
@@ -181,7 +181,7 @@ def save_walk_visualization(
     path : str or Path
         Destination ``.html`` file.
     start, layout, height, seed, scale, title
-        Forwarded verbatim to :func:`build_walk_visualization`.
+        Forwarded verbatim to `build_walk_visualization`.
 
     Returns
     -------
@@ -253,7 +253,7 @@ def save_cover_time_visualization(
     path : str or Path
         Destination ``.html`` file.
     title : str, default ``""``
-        Forwarded to :func:`build_cover_time_visualization`.
+        Forwarded to `build_cover_time_visualization`.
 
     Returns
     -------
@@ -322,7 +322,7 @@ def save_compare_times_visualization(
     path : str or Path
         Destination ``.html`` file.
     N, k, beta
-        Forwarded to :func:`build_compare_times_visualization`.
+        Forwarded to `build_compare_times_visualization`.
 
     Returns
     -------
@@ -350,12 +350,12 @@ def compute_metrics_data(
 ) -> dict:
     """Pre-compute (L, C) for ring / ER / WS across every (k, β) combination.
 
-    Used internally by :func:`build_metrics_analytics_visualization`.
+    Used internally by `build_metrics_analytics_visualization`.
 
     Both metrics are routed through the project's own hand-written
-    implementations.  The average path length :math:`L` is computed on the
+    implementations.  The average path length $L$ is computed on the
     largest connected component when the graph is disconnected (typical for
-    ER at small ``k``), matching the convention of :func:`camí_mig`.
+    ER at small ``k``), matching the convention of `camí_mig`.
 
     Parameters
     ----------
@@ -414,7 +414,7 @@ def build_metrics_analytics_visualization(
 ) -> str:
     """Generate the self-contained HTML page for the *Metric analytics* section.
 
-    Pre-computes :math:`L(\\beta)` and :math:`C(\\beta)` for the three
+    Pre-computes $L(\beta)$ and $C(\beta)$ for the three
     reference networks across the requested ``(k, β)`` grid and embeds the
     table as JSON inside the page.  The browser does no metric computation,
     so the slider stays interactive even at ``N = 1000``.
@@ -483,7 +483,7 @@ def save_metrics_analytics_visualization(
     path : str or Path
         Destination ``.html`` file.
     N, k_values, betas, k_default, seed
-        Forwarded to :func:`build_metrics_analytics_visualization`.
+        Forwarded to `build_metrics_analytics_visualization`.
 
     Returns
     -------
@@ -518,16 +518,16 @@ def build_metrics_analytics_from_data(
 ) -> str:
     """Render the metrics-analytics HTML from a precomputed data dict.
 
-    Separates the slow computation (:func:`compute_metrics_data`) from the
+    Separates the slow computation (`compute_metrics_data`) from the
     fast template render so cached data can be reused when only the template
     changes.  The template is always re-read from disk on each call.
 
     Parameters
     ----------
     data : dict
-        Output of :func:`compute_metrics_data`.
+        Output of `compute_metrics_data`.
     N, k_values, betas, k_default
-        Same meaning as in :func:`build_metrics_analytics_visualization`.
+        Same meaning as in `build_metrics_analytics_visualization`.
 
     Returns
     -------
@@ -572,9 +572,9 @@ def build_facebook_visualization(
     Parameters
     ----------
     fit_result : dict
-        Output of :func:`src.smallworld.real_network.fit_ws`.
+        Output of `fit_ws`.
     sigma_result : dict
-        Output of :func:`src.smallworld.real_network.smallworldness_sigma`.
+        Output of `smallworldness_sigma`.
 
     Returns
     -------
@@ -612,9 +612,9 @@ def save_facebook_visualization(
     Parameters
     ----------
     fit_result : dict
-        Output of :func:`src.smallworld.real_network.fit_ws`.
+        Output of `fit_ws`.
     sigma_result : dict
-        Output of :func:`src.smallworld.real_network.smallworldness_sigma`.
+        Output of `smallworldness_sigma`.
     path : str or Path
         Destination ``.html`` file.
 

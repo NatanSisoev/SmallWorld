@@ -1,7 +1,7 @@
 """SmallWorld — course project for Modelització i Simulació (MatCAD, UAB).
 
 Implements the Watts-Strogatz small-world network model from scratch.
-:class:`networkx.Graph` is used only as a container; every algorithmic
+`networkx.Graph` is used only as a container; every algorithmic
 step (construction, metrics, random walks) is written by hand.
 
 Submodules

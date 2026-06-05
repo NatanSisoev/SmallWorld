@@ -40,8 +40,11 @@ nav:
   - Explore: explore.md
   - API Reference:
       - Networks: api/networks.md
-      - Plotting: api/plotting.md
+      - Metrics: api/metrics.md
       - Simulation: api/simulation.md
+      - Plotting: api/plotting.md
+      - Visualization: api/visualization.md
+      - Real Network: api/real_network.md
 
 plugins:
   - search

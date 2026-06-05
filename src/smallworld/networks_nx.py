@@ -1,14 +1,14 @@
 """Network constructors for the small-world study.
 
-This module wraps :mod:`networkx` builders for the three reference
+This module wraps `networkx` builders for the three reference
 network models used throughout the project:
 
-* :func:`build_ring` — regular ring lattice (Watts-Strogatz with β = 0).
-* :func:`build_er`   — Erdős-Rényi G(N, p) with expected degree ``k``.
-* :func:`build_ws`   — Watts-Strogatz with rewiring probability ``β``.
+* `build_ring` — regular ring lattice (Watts-Strogatz with β = 0).
+* `build_er`   — Erdős-Rényi G(N, p) with expected degree ``k``.
+* `build_ws`   — Watts-Strogatz with rewiring probability ``β``.
 
 All builders accept an optional ``seed`` for reproducibility and return
-an undirected, unweighted :class:`networkx.Graph` on ``N`` nodes labelled
+an undirected, unweighted `networkx.Graph` on ``N`` nodes labelled
 ``0, 1, ..., N - 1``.
 """
 
@@ -22,8 +22,7 @@ __all__ = ["build_ring", "build_er", "build_ws", "build_all"]
 def build_ring(N: int, k: int, *, seed: int | None = None) -> nx.Graph:
     """Build a regular ring lattice with ``N`` nodes and degree ``k``.
 
-    Each node is connected to its ``k / 2`` nearest neighbours on each
-    side of the ring, so every node has degree exactly ``k``.
+    Delegates to `networkx.watts_strogatz_graph` with ``p=0``.
 
     Parameters
     ----------
@@ -32,13 +31,19 @@ def build_ring(N: int, k: int, *, seed: int | None = None) -> nx.Graph:
     k : int
         Degree of every node. Must be even and satisfy ``0 < k < N``.
     seed : int, optional
-        Unused (the ring lattice is deterministic); kept so all builders
-        share a uniform signature.
+        Unused (the ring lattice is deterministic); kept for a uniform
+        signature across all builders.
 
     Returns
     -------
     networkx.Graph
-        The ring lattice ``C(N, k)``.
+        The ring lattice ``C(N, k)`` — a ``k``-regular undirected graph.
+
+    Raises
+    ------
+    ValueError
+        If ``N < 2``, ``k`` is not even, or ``k`` does not satisfy
+        ``0 < k < N``.
     """
     _validate_ring_params(N, k)
     return nx.watts_strogatz_graph(N, k, p=0.0, seed=seed)
@@ -64,8 +69,13 @@ def build_er(N: int, k: int, *, seed: int | None = None) -> nx.Graph:
     -------
     networkx.Graph
         A realisation of G(N, k / (N - 1)). May be disconnected for
-        small ``k``; callers that need a connected graph should restrict
-        to the largest connected component.
+        small ``k``; restrict to the largest connected component if
+        connectivity is required.
+
+    Raises
+    ------
+    ValueError
+        If ``N < 2`` or ``k`` does not satisfy ``0 < k < N``.
     """
     _validate_Nk(N, k)
     p = k / (N - 1)
@@ -108,7 +118,15 @@ def build_ws(
     Returns
     -------
     networkx.Graph
-        A Watts-Strogatz graph WS(N, k, β).
+        A Watts-Strogatz graph WS(N, k, β). May be disconnected for
+        very small ``beta``; use ``connected=True`` to guarantee
+        connectivity.
+
+    Raises
+    ------
+    ValueError
+        If ``N < 2``, ``k`` is not even, ``k`` does not satisfy
+        ``0 < k < N``, or ``beta`` is outside ``[0, 1]``.
     """
     _validate_ring_params(N, k)
     if not 0.0 <= beta <= 1.0:
@@ -136,18 +154,25 @@ def build_all(
     Parameters
     ----------
     N : int
-        Number of nodes.
+        Number of nodes. Must satisfy ``N >= 2``.
     k : int
-        Average degree (exact for the ring and WS, expected for ER).
+        Average degree — exact for the ring and WS, expected for ER.
+        Must be even and satisfy ``0 < k < N``.
     beta : float, default 0.1
-        Rewiring probability for the Watts-Strogatz graph.
+        Rewiring probability for the Watts-Strogatz graph, in ``[0, 1]``.
     seed : int, default 0
-        Random seed shared across builders.
+        Random seed shared across all three builders.
 
     Returns
     -------
     dict[str, networkx.Graph]
-        Mapping with keys ``"ring"``, ``"er"`` and ``"ws"``.
+        Mapping with keys ``"ring"``, ``"er"``, and ``"ws"``.
+
+    Raises
+    ------
+    ValueError
+        Propagated from the individual builders if any parameter is
+        out of range.
     """
     return {
         "ring": build_ring(N, k, seed=seed),
