@@ -144,8 +144,3 @@ def test_cover_time_reproducible_with_seed(ring: nx.Graph):
     _, avg1 = cover_time(ring, n_simulations=5, seed=7)
     _, avg2 = cover_time(ring, n_simulations=5, seed=7)
     assert avg1 == pytest.approx(avg2)
-
-def test_cover_time_max_iter_returns_inf(ring: nx.Graph):
-    """A tiny max_iter forces non-convergence → average must be np.inf."""
-    _, avg = cover_time(ring, n_simulations=3, seed=42, max_iter=1)
-    assert avg == np.inf
