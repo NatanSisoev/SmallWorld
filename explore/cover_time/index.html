@@ -12,25 +12,31 @@
         <meta name="author" content="Lluís Gay, Sergi Prats, Ferran Villarta, Natan Sisoev">
       
       
+        <link rel="canonical" href="https://natansisoev.github.io/SmallWorld/explore/cover_time/">
       
+      
+        <link rel="prev" href="../random_walk/">
+      
+      
+        <link rel="next" href="../../real_network/">
       
       
         
       
       
-      <link rel="icon" href="/SmallWorld/assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>SmallWorld</title>
+        <title>Cover & Mixing Time - SmallWorld</title>
       
     
     
-      <link rel="stylesheet" href="/SmallWorld/assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="/SmallWorld/assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -49,9 +55,9 @@
       
     
     
-      <link rel="stylesheet" href="/SmallWorld/assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
     
-    <script>__md_scope=new URL("/SmallWorld/",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -75,6 +81,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#cover-mixing-time" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -85,7 +96,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="/SmallWorld/." title="SmallWorld" class="md-header__button md-logo" aria-label="SmallWorld" data-md-component="logo">
+    <a href="../.." title="SmallWorld" class="md-header__button md-logo" aria-label="SmallWorld" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -105,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              
+              Cover & Mixing Time
             
           </span>
         </div>
@@ -218,7 +229,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="/SmallWorld/." class="md-tabs__link">
+      <a href="../.." class="md-tabs__link">
         
   
   
@@ -237,7 +248,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="/SmallWorld/theory/" class="md-tabs__link">
+      <a href="../../theory/" class="md-tabs__link">
         
   
   
@@ -254,11 +265,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="/SmallWorld/explore/networks/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../networks/" class="md-tabs__link">
           
   
   
@@ -278,7 +291,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="/SmallWorld/real_network/" class="md-tabs__link">
+        <a href="../../real_network/" class="md-tabs__link">
           
   
   
@@ -298,7 +311,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="/SmallWorld/api/networks/" class="md-tabs__link">
+        <a href="../../api/networks/" class="md-tabs__link">
           
   
   
@@ -332,7 +345,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="/SmallWorld/." title="SmallWorld" class="md-nav__button md-logo" aria-label="SmallWorld" data-md-component="logo">
+    <a href="../.." title="SmallWorld" class="md-nav__button md-logo" aria-label="SmallWorld" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -362,7 +375,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/SmallWorld/." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -389,7 +402,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/SmallWorld/theory/" class="md-nav__link">
+      <a href="../../theory/" class="md-nav__link">
         
   
   
@@ -413,26 +426,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
             
   
   
@@ -450,7 +468,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -468,7 +486,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/SmallWorld/explore/networks/" class="md-nav__link">
+      <a href="../networks/" class="md-nav__link">
         
   
   
@@ -496,7 +514,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/SmallWorld/explore/metrics/" class="md-nav__link">
+      <a href="../metrics/" class="md-nav__link">
         
   
   
@@ -524,7 +542,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/SmallWorld/explore/random_walk/" class="md-nav__link">
+      <a href="../random_walk/" class="md-nav__link">
         
   
   
@@ -549,10 +567,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="/SmallWorld/explore/cover_time/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cover & Mixing Time
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -568,6 +613,48 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#cover-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cover time
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#side-by-side-effect-of-beta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Side-by-side: effect of \(\beta\)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -639,7 +726,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/SmallWorld/real_network/" class="md-nav__link">
+      <a href="../../real_network/" class="md-nav__link">
         
   
   
@@ -667,7 +754,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/SmallWorld/beyond/" class="md-nav__link">
+      <a href="../../beyond/" class="md-nav__link">
         
   
   
@@ -754,7 +841,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/SmallWorld/api/networks/" class="md-nav__link">
+      <a href="../../api/networks/" class="md-nav__link">
         
   
   
@@ -782,7 +869,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/SmallWorld/api/metrics/" class="md-nav__link">
+      <a href="../../api/metrics/" class="md-nav__link">
         
   
   
@@ -810,7 +897,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/SmallWorld/api/simulation/" class="md-nav__link">
+      <a href="../../api/simulation/" class="md-nav__link">
         
   
   
@@ -838,7 +925,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/SmallWorld/api/plotting/" class="md-nav__link">
+      <a href="../../api/plotting/" class="md-nav__link">
         
   
   
@@ -866,7 +953,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/SmallWorld/api/visualization/" class="md-nav__link">
+      <a href="../../api/visualization/" class="md-nav__link">
         
   
   
@@ -894,7 +981,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/SmallWorld/api/real_network/" class="md-nav__link">
+      <a href="../../api/real_network/" class="md-nav__link">
         
   
   
@@ -939,6 +1026,38 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#cover-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cover time
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#side-by-side-effect-of-beta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Side-by-side: effect of \(\beta\)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -951,8 +1070,81 @@
               
               <article class="md-content__inner md-typeset">
                 
-  <h1>404 - Not found</h1>
+                  
 
+
+  
+  
+
+
+<h1 id="cover-mixing-time">Cover &amp; mixing time<a class="headerlink" href="#cover-mixing-time" title="Permanent link">&para;</a></h1>
+<h2 id="cover-time">Cover time<a class="headerlink" href="#cover-time" title="Permanent link">&para;</a></h2>
+<p>The <strong>cover time</strong> is the expected number of steps to visit every node
+at least once. Set the number of simulations and click <strong>▶ Run</strong> to
+see the distribution. Compare the histograms across the three networks
+— the ring takes roughly <span class="arithmatex">\(\Theta(N^2)\)</span> steps, the other two
+<span class="arithmatex">\(\Theta(N \log N)\)</span>.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Ring lattice</label><label for="__tabbed_1_2">Erdős–Rényi</label><label for="__tabbed_1_3">Watts–Strogatz (<span class="arithmatex">\(\beta = 0.1\)</span>)</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p><iframe src="../../examples/cover_ring.html" width="100%" scrolling="no"
+  style="height:62vh;min-height:420px;border:1px solid #e0e0e0;border-radius:6px;display:block"></iframe></p>
+</div>
+<div class="tabbed-block">
+<p><iframe src="../../examples/cover_er.html" width="100%" scrolling="no"
+  style="height:62vh;min-height:420px;border:1px solid #e0e0e0;border-radius:6px;display:block"></iframe></p>
+</div>
+<div class="tabbed-block">
+<p><iframe src="../../examples/cover_ws.html" width="100%" scrolling="no"
+  style="height:62vh;min-height:420px;border:1px solid #e0e0e0;border-radius:6px;display:block"></iframe></p>
+</div>
+</div>
+</div>
+<hr />
+<h2 id="side-by-side-effect-of-beta">Side-by-side: effect of <span class="arithmatex">\(\beta\)</span><a class="headerlink" href="#side-by-side-effect-of-beta" title="Permanent link">&para;</a></h2>
+<p>This panel runs all three graphs simultaneously so you can compare
+cover time and mixing time directly. Use the <span class="arithmatex">\(\beta\)</span> slider to sweep
+from the pure ring (<span class="arithmatex">\(\beta \to 0\)</span>) to a fully random graph (<span class="arithmatex">\(\beta = 1\)</span>)
+and watch both metrics change.</p>
+<div class="admonition tip">
+<p class="admonition-title">What to look for</p>
+<p>Already at <span class="arithmatex">\(\beta \approx 0.01\)</span>–<span class="arithmatex">\(0.1\)</span>, the Watts–Strogatz graph
+matches the Erdős–Rényi cover and mixing times while still showing
+the ring's high clustering. This is the <strong>small-world window</strong> —
+the range where <span class="arithmatex">\(L\)</span> has collapsed but <span class="arithmatex">\(C\)</span> is still high.</p>
+</div>
+<p><strong>Controls:</strong></p>
+<ul>
+<li><strong>▶ Cover Time</strong> — animated walks until every node is visited.</li>
+<li><strong>▶ Mixing Time</strong> — matrix iteration to the stationary distribution
+  <span class="arithmatex">\(\pi(v) = \deg(v)/2|E|\)</span>; the bar chart below each panel shows <span class="arithmatex">\(\pi\)</span>.</li>
+<li><strong>↺ Reset</strong> — clear results and redraw the graphs.</li>
+<li><strong><span class="arithmatex">\(\beta\)</span> slider</strong> — updates the Watts–Strogatz graph live.</li>
+</ul>
+<iframe src="../../examples/compare_times.html" width="100%" scrolling="no"
+  style="height:80vh;min-height:520px;border:1px solid #e0e0e0;border-radius:6px;display:block"></iframe>
+
+<div class="admonition info">
+<p class="admonition-title">See also</p>
+<ul>
+<li><a href="../../theory/#characteristic-times">Theory → Characteristic times</a> — analytical scaling of cover and mixing time</li>
+<li><a href="../../theory/#the-small-world-window">Theory → The small-world window</a> — why <span class="arithmatex">\(L\)</span> and <span class="arithmatex">\(C\)</span> collapse at different <span class="arithmatex">\(\beta\)</span> scales</li>
+<li><a href="../../api/simulation/">API → Simulation</a> — <code>cover_time</code>, <code>mixing_time</code></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
               </article>
             </div>
           
@@ -995,12 +1187,12 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "/SmallWorld/", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "/SmallWorld/assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="/SmallWorld/assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
-        <script src="/SmallWorld/javascripts/mathjax.js"></script>
+        <script src="../../javascripts/mathjax.js"></script>
       
         <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       

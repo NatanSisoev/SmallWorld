@@ -12,25 +12,31 @@
         <meta name="author" content="Lluís Gay, Sergi Prats, Ferran Villarta, Natan Sisoev">
       
       
+        <link rel="canonical" href="https://natansisoev.github.io/SmallWorld/explore/random_walk/">
       
+      
+        <link rel="prev" href="../metrics/">
+      
+      
+        <link rel="next" href="../cover_time/">
       
       
         
       
       
-      <link rel="icon" href="/SmallWorld/assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>SmallWorld</title>
+        <title>Random Walk - SmallWorld</title>
       
     
     
-      <link rel="stylesheet" href="/SmallWorld/assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="/SmallWorld/assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -49,9 +55,9 @@
       
     
     
-      <link rel="stylesheet" href="/SmallWorld/assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
     
-    <script>__md_scope=new URL("/SmallWorld/",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -75,6 +81,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#random-walk" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -85,7 +96,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="/SmallWorld/." title="SmallWorld" class="md-header__button md-logo" aria-label="SmallWorld" data-md-component="logo">
+    <a href="../.." title="SmallWorld" class="md-header__button md-logo" aria-label="SmallWorld" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -105,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              
+              Random Walk
             
           </span>
         </div>
@@ -218,7 +229,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="/SmallWorld/." class="md-tabs__link">
+      <a href="../.." class="md-tabs__link">
         
   
   
@@ -237,7 +248,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="/SmallWorld/theory/" class="md-tabs__link">
+      <a href="../../theory/" class="md-tabs__link">
         
   
   
@@ -254,11 +265,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="/SmallWorld/explore/networks/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../networks/" class="md-tabs__link">
           
   
   
@@ -278,7 +291,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="/SmallWorld/real_network/" class="md-tabs__link">
+        <a href="../../real_network/" class="md-tabs__link">
           
   
   
@@ -298,7 +311,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="/SmallWorld/api/networks/" class="md-tabs__link">
+        <a href="../../api/networks/" class="md-tabs__link">
           
   
   
@@ -332,7 +345,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="/SmallWorld/." title="SmallWorld" class="md-nav__button md-logo" aria-label="SmallWorld" data-md-component="logo">
+    <a href="../.." title="SmallWorld" class="md-nav__button md-logo" aria-label="SmallWorld" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -362,7 +375,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/SmallWorld/." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -389,7 +402,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/SmallWorld/theory/" class="md-nav__link">
+      <a href="../../theory/" class="md-nav__link">
         
   
   
@@ -413,26 +426,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
             
   
   
@@ -450,7 +468,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -468,7 +486,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/SmallWorld/explore/networks/" class="md-nav__link">
+      <a href="../networks/" class="md-nav__link">
         
   
   
@@ -496,7 +514,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/SmallWorld/explore/metrics/" class="md-nav__link">
+      <a href="../metrics/" class="md-nav__link">
         
   
   
@@ -521,10 +539,19 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="/SmallWorld/explore/random_walk/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -540,6 +567,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -552,7 +580,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/SmallWorld/explore/cover_time/" class="md-nav__link">
+      <a href="../cover_time/" class="md-nav__link">
         
   
   
@@ -639,7 +667,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/SmallWorld/real_network/" class="md-nav__link">
+      <a href="../../real_network/" class="md-nav__link">
         
   
   
@@ -667,7 +695,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/SmallWorld/beyond/" class="md-nav__link">
+      <a href="../../beyond/" class="md-nav__link">
         
   
   
@@ -754,7 +782,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/SmallWorld/api/networks/" class="md-nav__link">
+      <a href="../../api/networks/" class="md-nav__link">
         
   
   
@@ -782,7 +810,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/SmallWorld/api/metrics/" class="md-nav__link">
+      <a href="../../api/metrics/" class="md-nav__link">
         
   
   
@@ -810,7 +838,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/SmallWorld/api/simulation/" class="md-nav__link">
+      <a href="../../api/simulation/" class="md-nav__link">
         
   
   
@@ -838,7 +866,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/SmallWorld/api/plotting/" class="md-nav__link">
+      <a href="../../api/plotting/" class="md-nav__link">
         
   
   
@@ -866,7 +894,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/SmallWorld/api/visualization/" class="md-nav__link">
+      <a href="../../api/visualization/" class="md-nav__link">
         
   
   
@@ -894,7 +922,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/SmallWorld/api/real_network/" class="md-nav__link">
+      <a href="../../api/real_network/" class="md-nav__link">
         
   
   
@@ -939,6 +967,8 @@
   
   
   
+    
+  
   
 </nav>
                   </div>
@@ -951,8 +981,61 @@
               
               <article class="md-content__inner md-typeset">
                 
-  <h1>404 - Not found</h1>
+                  
 
+
+  
+  
+
+
+<h1 id="random-walk">Random walk<a class="headerlink" href="#random-walk" title="Permanent link">&para;</a></h1>
+<p>A walker moves to a uniformly chosen neighbour at every step. Colour
+tracks the state: <strong>green</strong> = start, <strong>red</strong> = current position,
+<strong>orange</strong> = already visited, <strong>blue</strong> = not yet reached.</p>
+<p>Click any node to restart the walk from there.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Ring lattice</label><label for="__tabbed_1_2">Erdős–Rényi</label><label for="__tabbed_1_3">Watts–Strogatz (<span class="arithmatex">\(\beta = 0.1\)</span>)</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>The walker is trapped near its starting point for a long time —
+there are no shortcuts, so spreading across the ring is slow.</p>
+<p><iframe src="../../examples/walk_ring.html" width="100%" scrolling="no"
+  style="height:70vh;min-height:480px;border:1px solid #e0e0e0;border-radius:6px;display:block"></iframe></p>
+</div>
+<div class="tabbed-block">
+<p>Random structure means the walker can jump across the graph in just
+a few steps — coverage is very fast but the graph has no spatial order.</p>
+<p><iframe src="../../examples/walk_er.html" width="100%" scrolling="no"
+  style="height:70vh;min-height:480px;border:1px solid #e0e0e0;border-radius:6px;display:block"></iframe></p>
+</div>
+<div class="tabbed-block">
+<p>The rewired shortcuts act as long-range teleporters. Watch how the
+walker occasionally jumps across the ring — these are exactly the edges
+that drive the small-world speedup.</p>
+<p><iframe src="../../examples/walk_ws.html" width="100%" scrolling="no"
+  style="height:70vh;min-height:480px;border:1px solid #e0e0e0;border-radius:6px;display:block"></iframe></p>
+</div>
+</div>
+</div>
+<div class="admonition info">
+<p class="admonition-title">See also</p>
+<ul>
+<li><a href="../../theory/#random-walks">Theory → Random walks</a> — Markov chain formulation and stationary distribution</li>
+<li><a href="../../api/simulation/">API → Simulation</a> — <code>random_walk</code>, <code>stationary_distribution</code></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
               </article>
             </div>
           
@@ -995,12 +1078,12 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "/SmallWorld/", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "/SmallWorld/assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="/SmallWorld/assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
-        <script src="/SmallWorld/javascripts/mathjax.js"></script>
+        <script src="../../javascripts/mathjax.js"></script>
       
         <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       
