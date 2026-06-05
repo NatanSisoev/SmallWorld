@@ -85,6 +85,10 @@ After that, the project can be viewed in two natural ways. The most visual one i
 
 The folder `docs/` contains a small documentation website and is the best place to see the project in a clean and visual format. It is especially useful for browsing the results comfortably in the browser and for using the interactive views. The most useful pages are `docs/index.md` for the project overview, `docs/theory.md` for the model and metrics, `docs/explore.md` for interactive exploration, and `docs/real_network.md` for the final comparison.
 
+The documentation is also available online:
+
+https://natansisoev.github.io/SmallWorld/
+
 To open that documentation locally, the easiest option is:
 
 ```bash
