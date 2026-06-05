@@ -41,9 +41,9 @@ SmallWorld/
 │   └── ...
 ├── notebooks/                    experiments — run in order
 │   ├── 01_visualise_networks.ipynb
-│   ├── 02_basic_metrics.ipynb
-│   ├── 03_small_world_window.ipynb
-│   └── 04_random_walks.ipynb
+│   ├── 02_small_world_window.ipynb
+|   ├── 03_random_walks.ipynb
+|   └── 04_real_network.ipynb
 ├── docs/                         this documentation
 └── figures/                      generated plots and pyvis HTML
 ```

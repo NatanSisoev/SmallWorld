@@ -5,10 +5,13 @@ CLAUDE.md
 # Figures
 figures/
 
-# Downloaded datasets (large binaries, not versioned)
+# Downloaded datasets (large binaries, not versioned) ...
 data/*.gz
 data/*.txt
 data/*.txt.gz
+# ... except the Facebook dataset: small (218 KB) and static, so we commit it
+# to keep the project fully offline and reproducible (no SNAP download needed).
+!data/facebook_combined.txt.gz
 
 # Generated pyvis HTML embedded in the docs (rebuilt by `make examples`)
 docs/examples/

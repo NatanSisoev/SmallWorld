@@ -152,8 +152,6 @@ metrics_html = build_metrics_analytics_from_data(
 (OUT_DIR / "metrics_analytics.html").write_text(metrics_html, encoding="utf-8")
 print(f"  [ok] {(OUT_DIR / 'metrics_analytics.html').relative_to(ROOT)}")
 
-print(f"Done.  All HTML files written to {OUT_DIR.relative_to(ROOT)}")
-
 # ── real network analysis (Facebook Social Circles, SNAP) ────────────────────
 # Slow (5-10 min first time). Cached to data/ so subsequent runs are instant.
 from src.smallworld.real_network import fit_ws, load_facebook, smallworldness_sigma
@@ -197,7 +195,4 @@ else:
 dest = save_facebook_visualization(fit_result, sigma_result, OUT_DIR / "facebook_analysis.html")
 print(f"  [ok] {dest.relative_to(ROOT)}")
 
-json_path = OUT_DIR / "facebook_results.json"
-with open(json_path, "w", encoding="utf-8") as fh:
-    json.dump({**sigma_result, **fit_result}, fh, indent=2)
-print(f"  [ok] {json_path.relative_to(ROOT)}")
+print(f"Done.  All HTML files written to {OUT_DIR.relative_to(ROOT)}")

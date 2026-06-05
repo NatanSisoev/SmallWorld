@@ -36,7 +36,8 @@ SmallWorld/
 ├── notebooks/                        # experiments - run in order
 │   ├── 01_visualise_networks.ipynb   # build & draw the three networks + walks
 │   ├── 02_small_world_window.ipynb   # L and C vs β and k: the small-world window
-│   └── 03_spectral_analysis.ipynb    # spectral gap / mixing analysis
+|   ├── 03_random_walks.ipynb         # TODO
+|   └── 04_real_network.ipynb         # real network fitting check
 ├── scripts/
 │   └── build_examples.py             # generate the documentation's interactive HTML examples
 ├── tests/                            # unit tests (pytest)
