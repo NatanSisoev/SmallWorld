@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Facebook Network Analysis – SmallWorld</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: sans-serif;
+  font-size: 12px;
+  background: #f0f2f5;
+  color: #222;
+  padding: 8px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: hidden;
+}
+
+#controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 7px 12px;
+  flex-shrink: 0;
+  height: 44px;
+}
+.cg { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+label { font-size: 11px; color: #555; }
+.badge {
+  font-size: 12px; font-weight: 700;
+  background: #e8f0fe; color: #1a56db;
+  border-radius: 3px; padding: 2px 7px; text-align: center;
+}
+.badge-green {
+  background: #e8f5e9; color: #2e7d32;
+}
+
+#panels {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+}
+.panel {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+.ph {
+  padding: 6px 12px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #eee;
+  flex-shrink: 0;
+}
+.ph-title { font-size: 13px; font-weight: 700; color: #222; }
+.ph-sub   { font-size: 10px; color: #888; margin-top: 1px; }
+.chart-box {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+.chart-box canvas {
+  display: block;
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+}
+
+#footnote {
+  font-size: 10px;
+  color: #777;
+  text-align: center;
+  flex-shrink: 0;
+  padding: 2px 0 0;
+}
+#footnote b { color: #444; }
+</style>
+</head>
+<body>
+
+<div id="controls">
+  <div class="cg"><label>Nodes:</label>         <span class="badge">N = 4039</span></div>
+  <div class="cg"><label>Avg degree:</label>  <span class="badge">k = 44</span></div>
+  <div class="cg"><label>β* (fit):</label>    <span class="badge">0.0518</span></div>
+  <div class="cg"><label>σ (smallworld):</label><span class="badge badge-green">39.02</span></div>
+  <div class="cg"><label>Real C:</label>      <span class="badge">0.6055</span></div>
+  <div class="cg"><label>Real L:</label>      <span class="badge">3.7279</span></div>
+</div>
+
+<div id="panels">
+
+  <div class="panel">
+    <div class="ph">
+      <div class="ph-title">WS fit: normalised L & C vs β</div>
+      <div class="ph-sub">WS curves (solid) · Facebook lines (dashed) · β* where both are closest to Facebook</div>
+    </div>
+    <div class="chart-box"><canvas id="cv-fit"></canvas></div>
+  </div>
+
+  <div class="panel">
+    <div class="ph">
+      <div class="ph-title">Decomposition of σ = 39.02</div>
+      <div class="ph-sub">σ = (C_real / C_rand) / (L_real / L_rand) &nbsp;·&nbsp; σ > 1 indicates small-world</div>
+    </div>
+    <div class="chart-box"><canvas id="cv-sigma"></canvas></div>
+  </div>
+
+</div>
+
+<div id="footnote">
+  Dataset: <b>Facebook Social Circles (SNAP)</b> — 4039 nodes, 44 average degree.
+  β* minimises the joint distance to Facebook's L and C.
+</div>
+
+<script>
+const BETA_CURVE  = [[0.001, 0.10453031434063018, 0.9971736286522824], [0.0016378937069540646, 0.07763970470494594, 0.9949701997401689], [0.0026826957952797246, 0.06222654181409434, 0.9918893719424783], [0.004393970560760791, 0.04978467283296516, 0.9869924723221833], [0.0071968567300115215, 0.039822383088741246, 0.9786319730187881], [0.011787686347935873, 0.03195304384148163, 0.9644233876869588], [0.019306977288832496, 0.024704716636809662, 0.9419266596784], [0.03162277660168379, 0.018366505641755064, 0.9064661776452946], [0.0517947467923121, 0.013490408990000676, 0.8496149907247824], [0.08483428982440717, 0.009284124379808205, 0.7635701919153665], [0.13894954943731375, 0.006300423051490339, 0.6367397044641709], [0.22758459260747887, 0.004238641951088838, 0.45842759913164854], [0.3727593720314938, 0.0024185792381875232, 0.24176428647246787], [0.6105402296585326, 0.0007439171404678987, 0.05640044409003143], [1.0, -9.690231635568107e-05, -0.00030543130644169894]];
+const L_REAL_NORM = 0.025554;
+const C_REAL_NORM = 0.824012;
+const BEST_IDX    = 8;
+const C_RATIO     = 55.8959;
+const L_RATIO     = 1.4323;
+const SIGMA_STR   = "39.02";
+const BETA_OPT    = "0.0518";
+
+// ── Canvas setup (same pattern as other templates) ───────────────────────────
+function setupCanvas(canvas) {
+  const box = canvas.parentElement;
+  const W = box.clientWidth, H = box.clientHeight;
+  if (W < 20 || H < 20) return null;
+  const dpr = window.devicePixelRatio || 1;
+  if (canvas.width  !== W * dpr) canvas.width  = W * dpr;
+  if (canvas.height !== H * dpr) canvas.height = H * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  return { ctx, W, H };
+}
+
+// ── Chart 1: L_norm(β) and C_norm(β) vs β (log x-axis) ───────────────────────
+function drawFitChart() {
+  const canvas = document.getElementById('cv-fit');
+  const ready  = setupCanvas(canvas);
+  if (!ready) { requestAnimationFrame(drawFitChart); return; }
+  const { ctx, W, H } = ready;
+
+  const L_COLOR = '#1565C0';   // blue — WS L_norm
+  const C_COLOR = '#c62828';   // red  — WS C_norm
+
+  const betas    = BETA_CURVE.map(t => t[0]);
+  const logBetas = betas.map(Math.log10);
+  const xmin = Math.min(...logBetas) - 0.18;
+  const xmax = Math.max(...logBetas) + 0.18;
+
+  const pad = { t: 16, r: 18, b: 40, l: 42 };
+  const cW  = W - pad.l - pad.r;
+  const cH  = H - pad.t - pad.b;
+
+  const xPx = lb => pad.l + (lb - xmin) / (xmax - xmin) * cW;   // β (log)
+  const yPx = v  => pad.t + (1 - v) * cH;                       // normalised [0,1]
+
+  // ── Gridlines ──────────────────────────────────────────────────────
+  ctx.strokeStyle = '#eee'; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+  [0, 0.25, 0.5, 0.75, 1].forEach(v => {
+    ctx.beginPath(); ctx.moveTo(pad.l, yPx(v)); ctx.lineTo(pad.l + cW, yPx(v)); ctx.stroke();
+  });
+  logBetas.forEach(lb => {
+    ctx.beginPath(); ctx.moveTo(xPx(lb), pad.t); ctx.lineTo(xPx(lb), pad.t + cH); ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  // ── Axis frame ─────────────────────────────────────────────────────
+  ctx.strokeStyle = '#888'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t + cH);
+  ctx.lineTo(pad.l + cW, pad.t + cH);
+  ctx.stroke();
+
+  // ── Y ticks (normalised) ───────────────────────────────────────────
+  ctx.font = '10px sans-serif'; ctx.fillStyle = '#666';
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  [0, 0.25, 0.5, 0.75, 1].forEach(v => ctx.fillText(v.toFixed(2), pad.l - 5, yPx(v)));
+
+  // ── X ticks (β, plain decimal) ─────────────────────────────────────
+  ctx.fillStyle = '#555'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  betas.forEach((b, i) => {
+    // Only label a readable subset to avoid crowding (decade-ish points).
+    const lbl = (b <= 0.0011 || b >= 0.99 ||
+                 Math.abs(Math.log10(b) - Math.round(Math.log10(b))) < 0.05)
+      ? (b < 0.01 ? b.toExponential(0) : b.toString())
+      : null;
+    if (lbl !== null) ctx.fillText(lbl, xPx(logBetas[i]), pad.t + cH + 6);
+  });
+
+  // ── Axis titles ────────────────────────────────────────────────────
+  ctx.font = 'italic 10px sans-serif'; ctx.fillStyle = '#444';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  ctx.fillText('β  (rewiring, log scale)', pad.l + cW / 2, H - 1);
+  ctx.save();
+  ctx.translate(11, pad.t + cH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.textBaseline = 'middle';
+  ctx.fillText('normalised value  (0 = ER · 1 = ring)', 0, 0);
+  ctx.restore();
+
+  // ── β* vertical line (green) ───────────────────────────────────────
+  const betaStarX = xPx(logBetas[BEST_IDX]);
+  ctx.strokeStyle = '#2e7d32'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]);
+  ctx.beginPath(); ctx.moveTo(betaStarX, pad.t); ctx.lineTo(betaStarX, pad.t + cH); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#2e7d32'; ctx.font = 'bold 10px sans-serif';
+  ctx.textAlign = (BEST_IDX > BETA_CURVE.length / 2) ? 'right' : 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText(' β* = ' + BETA_OPT + ' ', betaStarX, pad.t + 1);
+
+  // ── Facebook horizontal reference lines (dashed) ───────────────────
+  function hline(yVal, color) {
+    ctx.strokeStyle = color; ctx.lineWidth = 1.6; ctx.setLineDash([6, 4]);
+    ctx.beginPath(); ctx.moveTo(pad.l, yPx(yVal)); ctx.lineTo(pad.l + cW, yPx(yVal)); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  hline(L_REAL_NORM, L_COLOR);
+  hline(C_REAL_NORM, C_COLOR);
+
+  // ── WS curves (solid, with markers) ────────────────────────────────
+  function curve(idx, color) {
+    ctx.strokeStyle = color; ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    BETA_CURVE.forEach((t, i) => {
+      const x = xPx(logBetas[i]), y = yPx(t[idx]);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    ctx.fillStyle = color;
+    BETA_CURVE.forEach((t, i) => {
+      ctx.beginPath(); ctx.arc(xPx(logBetas[i]), yPx(t[idx]), 2.8, 0, Math.PI * 2); ctx.fill();
+    });
+  }
+  curve(2, C_COLOR);   // C_norm (red)
+  curve(1, L_COLOR);   // L_norm (blue)
+
+  // ── Legend (top-right) ─────────────────────────────────────────────
+  const lw = 120, lx = pad.l + cW - lw, ly0 = pad.t + 8;
+  ctx.font = '10px sans-serif'; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+
+  function legendLine(y, color, dash, text) {
+    ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.setLineDash(dash);
+    ctx.beginPath(); ctx.moveTo(lx, y); ctx.lineTo(lx + 18, y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#222'; ctx.fillText(text, lx + 22, y);
+  }
+  legendLine(ly0,      L_COLOR, [],     'L (WS)');
+  legendLine(ly0 + 15, C_COLOR, [],     'C (WS)');
+  legendLine(ly0 + 30, '#555',  [6, 4], 'Facebook');
+}
+
+// ── Chart 2: σ breakdown bar chart ──────────────────────────────────────────
+function drawSigmaChart() {
+  const canvas = document.getElementById('cv-sigma');
+  const ready  = setupCanvas(canvas);
+  if (!ready) { requestAnimationFrame(drawSigmaChart); return; }
+  const { ctx, W, H } = ready;
+
+  const pad  = { t: 32, r: 22, b: 36, l: 48 };
+  const cW   = W - pad.l - pad.r;
+  const cH   = H - pad.t - pad.b;
+  const yMax = Math.max(C_RATIO, L_RATIO, 1.1) * 1.2;
+  const toY  = v => pad.t + (1 - v / yMax) * cH;
+
+  // Gridlines
+  const N_TICKS = 5;
+  ctx.strokeStyle = '#eee'; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+  for (let i = 0; i <= N_TICKS; i++) {
+    const y = pad.t + (i / N_TICKS) * cH;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + cW, y); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  // Axes
+  ctx.strokeStyle = '#888'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad.l, pad.t);   ctx.lineTo(pad.l, pad.t + cH);
+  ctx.lineTo(pad.l + cW, pad.t + cH); ctx.stroke();
+
+  // Y labels
+  ctx.font = '10px sans-serif'; ctx.fillStyle = '#666';
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (let i = 0; i <= N_TICKS; i++) {
+    const v = (1 - i / N_TICKS) * yMax;
+    const y = pad.t + (i / N_TICKS) * cH;
+    ctx.fillText(v.toFixed(1), pad.l - 5, y);
+  }
+
+  // Bars
+  const bars = [
+    { label: 'C / C_rand', value: C_RATIO, color: '#43A047', cx: pad.l + cW * 0.30 },
+    { label: 'L / L_rand', value: L_RATIO, color: '#1565C0', cx: pad.l + cW * 0.70 },
+  ];
+  const bW = cW * 0.20;
+
+  bars.forEach(({ label, value, color, cx }) => {
+    const bx = cx - bW / 2;
+    const by = toY(value);
+    const bh = (pad.t + cH) - by;
+
+    ctx.fillStyle   = color + '55';
+    ctx.fillRect(bx, by, bW, bh);
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = 2;
+    ctx.strokeRect(bx, by, bW, bh);
+
+    // Value on top
+    ctx.font = 'bold 11px sans-serif'; ctx.fillStyle = '#222';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.fillText(value.toFixed(3), cx, by - 4);
+
+    // X label
+    ctx.font = '10px sans-serif'; ctx.fillStyle = '#555';
+    ctx.textBaseline = 'top';
+    ctx.fillText(label, cx, pad.t + cH + 5);
+  });
+
+  // Reference line at y = 1 (dashed)
+  ctx.strokeStyle = '#888'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
+  ctx.beginPath(); ctx.moveTo(pad.l, toY(1)); ctx.lineTo(pad.l + cW, toY(1)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font = '9px sans-serif'; ctx.fillStyle = '#888';
+  ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+  ctx.fillText('ref = 1', pad.l + cW - 4, toY(1) - 2);
+
+  // σ value (inside chart, top-left corner)
+  ctx.font = 'bold 13px sans-serif'; ctx.fillStyle = '#2e7d32';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.fillText('σ = ' + SIGMA_STR, pad.l + 6, pad.t + 4);
+}
+
+// ── Draw & resize ────────────────────────────────────────────────────────────
+function drawAll() { drawFitChart(); drawSigmaChart(); }
+
+function firstDraw() {
+  requestAnimationFrame(() => requestAnimationFrame(drawAll));
+}
+
+if (document.readyState === 'complete') firstDraw();
+else window.addEventListener('load', firstDraw);
+
+if (typeof ResizeObserver !== 'undefined') {
+  const ro = new ResizeObserver(drawAll);
+  ro.observe(document.getElementById('cv-fit'));
+  ro.observe(document.getElementById('cv-sigma'));
+} else {
+  window.addEventListener('resize', drawAll);
+}
+</script>
+</body>
+</html>

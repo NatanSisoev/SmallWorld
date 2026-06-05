@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Random Walk – SmallWorld</title>
+<script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    font-family: sans-serif;
+    font-size: 13px;
+    background: #f5f7fa;
+    color: #222;
+  }
+
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 8px;
+    gap: 6px;
+  }
+
+  /* ── title (optional) ── */
+  .embed-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    padding: 0 2px;
+    flex-shrink: 0;
+  }
+
+  /* ── control bar ── */
+  #controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 6px 10px;
+    flex-shrink: 0;
+  }
+  .ctrl-group { display: flex; align-items: center; gap: 4px; }
+
+  button {
+    padding: 4px 11px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: filter .13s;
+    white-space: nowrap;
+  }
+  button:hover    { filter: brightness(0.88); }
+  button:active   { filter: brightness(0.76); }
+  button:disabled { opacity: .4; cursor: default; filter: none; }
+
+  #btn-step  { background: #1976D2; color: #fff; }
+  #btn-walkn { background: #2E7D32; color: #fff; }
+  #btn-auto  { background: #E65100; color: #fff; }
+  #btn-reset { background: #616161; color: #fff; }
+
+  input[type=number] {
+    width: 52px;
+    padding: 3px 5px;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+  label { font-size: 11px; color: #666; }
+
+  /* ── progress bar ── */
+  #progress-track {
+    height: 5px;
+    background: #e8eaf0;
+    border-radius: 3px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  #progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1976D2, #42A5F5);
+    width: 0%;
+    transition: width 0.15s ease;
+    border-radius: 3px;
+  }
+  #progress-fill.done { background: #2E7D32; }
+
+  /* ── stats bar ── */
+  #stats-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+  #stats {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 12px;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .legend {
+    display: flex;
+    gap: 10px;
+    font-size: 11px;
+    color: #666;
+  }
+  .dot {
+    display: inline-block;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    margin-right: 3px;
+    vertical-align: middle;
+  }
+
+  /* ── completion banner ── */
+  #complete-banner {
+    display: none;
+    background: #E8F5E9;
+    border: 1px solid #A5D6A7;
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1B5E20;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  /* ── trace box ── */
+  #trace-box {
+    font-size: 11px;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 4px 8px;
+    max-height: 40px;
+    overflow-y: auto;
+    color: #777;
+    line-height: 1.5;
+    flex-shrink: 0;
+  }
+
+  /* ── graph canvas ── */
+  #graph {
+    flex: 1;
+    min-height: 0;           /* allow flex item to shrink below content size */
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    background: #ffffff;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <h3 style='margin:0 0 6px;font-family:sans-serif;font-size:15px'>Erdos-Renyi - random walk</h3>
+
+  <!-- ── controls ── -->
+  <div id="controls">
+    <button id="btn-step">▶ Step</button>
+
+    <div class="ctrl-group">
+      <button id="btn-walkn">▶▶ Walk</button>
+      <label>N =</label>
+      <input type="number" id="n-input" value="5" min="1" max="10000">
+    </div>
+
+    <div class="ctrl-group">
+      <button id="btn-auto">⏵ Auto</button>
+      <label>ms =</label>
+      <input type="number" id="speed-input" value="350" min="50" max="5000" step="50">
+    </div>
+
+    <button id="btn-reset">↺ Reset</button>
+  </div>
+
+  <!-- ── progress bar ── -->
+  <div id="progress-track"><div id="progress-fill"></div></div>
+
+  <!-- ── stats + legend ── -->
+  <div id="stats-bar">
+    <div id="stats">Step: 0 &nbsp;|&nbsp; Visited: 1 / 30 &nbsp;|&nbsp; Current: 0</div>
+    <div class="legend">
+      <span><span class="dot" style="background:#4CAF50"></span>Start</span>
+      <span><span class="dot" style="background:#FF4444"></span>Current</span>
+      <span><span class="dot" style="background:#FF9800"></span>Visited</span>
+      <span><span class="dot" style="background:#97C2FC"></span>Unvisited</span>
+    </div>
+  </div>
+
+  <!-- ── completion banner ── -->
+  <div id="complete-banner"></div>
+
+  <!-- ── trace ── -->
+  <div id="trace-box">Path: <span id="trace-span">0</span></div>
+
+  <!-- ── vis.js canvas (sized by flex, not by inline style) ── -->
+  <div id="graph"></div>
+
+</div><!-- #app -->
+
+<script>
+// ── graph data (injected by Python) ─────────────────────────────────────────
+const NODES_DATA = [{"id":0,"label":"0","x":-179.41,"y":-38.47,"fixed":{"x":true,"y":true},"color":{"background":"#4CAF50","border":"#1B5E20"},"font":{"color":"#111111","size":12},"size":16},{"id":1,"label":"1","x":294.73,"y":-9.16,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":2,"label":"2","x":-242.88,"y":-117.87,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":3,"label":"3","x":37.33,"y":25.7,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":4,"label":"4","x":128.73,"y":-204.43,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":5,"label":"5","x":-194.37,"y":200.09,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":6,"label":"6","x":74.18,"y":44.89,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":7,"label":"7","x":-87.8,"y":218.74,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":8,"label":"8","x":-28.88,"y":-41.44,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":9,"label":"9","x":11.84,"y":109.61,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":10,"label":"10","x":-119.67,"y":118.54,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":11,"label":"11","x":103.64,"y":178.2,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":12,"label":"12","x":-80.28,"y":-136.29,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":13,"label":"13","x":-110.18,"y":-42.42,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":14,"label":"14","x":223.75,"y":77.39,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":15,"label":"15","x":90.61,"y":-34.04,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":16,"label":"16","x":210.35,"y":-291.86,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":17,"label":"17","x":174.02,"y":15.41,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":18,"label":"18","x":-198.52,"y":4.09,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":19,"label":"19","x":206.18,"y":-98.17,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":20,"label":"20","x":-88.36,"y":38.41,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":21,"label":"21","x":18.36,"y":-227.01,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":22,"label":"22","x":-11.53,"y":255.4,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":23,"label":"23","x":-25.74,"y":108.97,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":24,"label":"24","x":192.68,"y":159.18,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":25,"label":"25","x":-151.72,"y":71.46,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":26,"label":"26","x":111.18,"y":-145.93,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":27,"label":"27","x":-350.0,"y":-74.62,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":28,"label":"28","x":-51.89,"y":-76.79,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16},{"id":29,"label":"29","x":43.65,"y":-87.59,"fixed":{"x":true,"y":true},"color":{"background":"#97C2FC","border":"#2B7CE9"},"font":{"color":"#111111","size":12},"size":16}];
+const EDGES_DATA = [{"from":0,"to":2},{"from":0,"to":8},{"from":0,"to":10},{"from":0,"to":13},{"from":0,"to":20},{"from":0,"to":27},{"from":0,"to":28},{"from":1,"to":14},{"from":1,"to":17},{"from":1,"to":19},{"from":2,"to":13},{"from":3,"to":8},{"from":3,"to":9},{"from":3,"to":10},{"from":3,"to":14},{"from":3,"to":20},{"from":3,"to":26},{"from":4,"to":19},{"from":4,"to":21},{"from":4,"to":26},{"from":4,"to":29},{"from":5,"to":7},{"from":5,"to":10},{"from":5,"to":25},{"from":6,"to":8},{"from":6,"to":13},{"from":6,"to":17},{"from":6,"to":24},{"from":7,"to":9},{"from":7,"to":23},{"from":8,"to":12},{"from":8,"to":29},{"from":9,"to":15},{"from":9,"to":20},{"from":10,"to":18},{"from":10,"to":22},{"from":11,"to":17},{"from":11,"to":22},{"from":11,"to":23},{"from":11,"to":24},{"from":12,"to":18},{"from":12,"to":21},{"from":12,"to":28},{"from":12,"to":29},{"from":13,"to":20},{"from":13,"to":28},{"from":14,"to":24},{"from":15,"to":19},{"from":15,"to":28},{"from":16,"to":26},{"from":17,"to":19},{"from":17,"to":29},{"from":18,"to":25},{"from":19,"to":26},{"from":20,"to":25},{"from":21,"to":29},{"from":23,"to":25},{"from":23,"to":29},{"from":25,"to":28},{"from":26,"to":28}];
+const ADJ        = {"0":[2,8,10,13,20,27,28],"1":[14,17,19],"2":[0,13],"3":[8,9,10,14,20,26],"4":[19,21,26,29],"5":[7,10,25],"6":[8,13,17,24],"7":[5,9,23],"8":[0,3,6,12,29],"9":[3,7,15,20],"10":[0,3,5,18,22],"11":[17,22,23,24],"12":[8,18,21,28,29],"13":[0,2,6,20,28],"14":[1,3,24],"15":[9,19,28],"16":[26],"17":[1,6,11,19,29],"18":[10,12,25],"19":[1,4,15,17,26],"20":[0,3,9,13,25],"21":[4,12,29],"22":[10,11],"23":[7,11,25,29],"24":[6,11,14],"25":[5,18,20,23,28],"26":[3,4,16,19,28],"27":[0],"28":[0,12,13,15,25,26],"29":[4,8,12,17,21,23]};   // keys are strings (JSON limitation)
+const START      = 0;
+const N_NODES    = 30;
+
+// ── vis.js setup ─────────────────────────────────────────────────────────────
+const nodesDS = new vis.DataSet(NODES_DATA);
+const edgesDS = new vis.DataSet(EDGES_DATA);
+
+const network = new vis.Network(
+  document.getElementById('graph'),
+  { nodes: nodesDS, edges: edgesDS },
+  {
+    physics: false,
+    interaction: {
+      dragNodes: false,
+      zoomView: true,
+      hover: true,
+    },
+    edges: {
+      color: { color: '#cccccc', highlight: '#666666' },
+      width: 1.5,
+      smooth: { enabled: false },
+    },
+    nodes: {
+      shape: 'dot',
+      borderWidth: 1.5,
+    },
+  }
+);
+
+// ── walk state ───────────────────────────────────────────────────────────────
+let currentNode = START;
+let stepCount   = 0;
+let visited     = new Set([START]);
+let traceArr    = [START];
+let autoTimer   = null;
+let autoPlaying = false;
+
+// ── colour palette ───────────────────────────────────────────────────────────
+const C = {
+  unvisited: { background: '#97C2FC', border: '#2B7CE9' },
+  visited:   { background: '#FFB74D', border: '#E65100' },
+  current:   { background: '#EF5350', border: '#B71C1C' },
+  start:     { background: '#66BB6A', border: '#1B5E20' },
+};
+
+function nodeColor(id) {
+  if (id === currentNode) return C.current;
+  if (id === START)       return C.start;
+  if (visited.has(id))   return C.visited;
+  return C.unvisited;
+}
+
+function refreshColors() {
+  nodesDS.update(nodesDS.map(n => ({ id: n.id, color: nodeColor(n.id) })));
+}
+
+// ── walk core ────────────────────────────────────────────────────────────────
+function walkStep() {
+  const neighbors = ADJ[String(currentNode)];
+  if (!neighbors || neighbors.length === 0) return;
+  currentNode = neighbors[Math.floor(Math.random() * neighbors.length)];
+  visited.add(currentNode);
+  stepCount++;
+  traceArr.push(currentNode);
+  if (traceArr.length > 400) traceArr = traceArr.slice(-400);
+  refreshColors();
+  updateStats();
+}
+
+function reset(newStart) {
+  stopAuto();
+  currentNode = (newStart !== undefined) ? newStart : START;
+  stepCount   = 0;
+  visited     = new Set([currentNode]);
+  traceArr    = [currentNode];
+  document.getElementById('complete-banner').style.display = 'none';
+  document.getElementById('progress-fill').classList.remove('done');
+  refreshColors();
+  updateStats();
+}
+
+function updateStats() {
+  const pct = visited.size / N_NODES;
+
+  document.getElementById('stats').innerHTML =
+    `Step: ${stepCount} &nbsp;|&nbsp; Visited: ${visited.size} / ${N_NODES} &nbsp;|&nbsp; Current: ${currentNode}`;
+
+  document.getElementById('progress-fill').style.width = (pct * 100).toFixed(1) + '%';
+
+  const span = document.getElementById('trace-span');
+  span.textContent = traceArr.join(' → ');
+  document.getElementById('trace-box').scrollLeft = 9999;
+
+  // Completion banner
+  const banner = document.getElementById('complete-banner');
+  if (visited.size === N_NODES && stepCount > 0) {
+    banner.textContent = `All ${N_NODES} nodes visited in ${stepCount} steps!`;
+    banner.style.display = 'block';
+    document.getElementById('progress-fill').classList.add('done');
+  }
+}
+
+// ── auto-play ─────────────────────────────────────────────────────────────────
+function startAuto() {
+  const ms = Math.max(50, parseInt(document.getElementById('speed-input').value) || 350);
+  autoTimer   = setInterval(walkStep, ms);
+  autoPlaying = true;
+  document.getElementById('btn-auto').textContent = '⏸ Pause';
+}
+
+function stopAuto() {
+  clearInterval(autoTimer);
+  autoTimer   = null;
+  autoPlaying = false;
+  document.getElementById('btn-auto').textContent = '⏵ Auto';
+}
+
+// ── button wiring ─────────────────────────────────────────────────────────────
+document.getElementById('btn-step').onclick = () => walkStep();
+
+document.getElementById('btn-walkn').onclick = () => {
+  const n = Math.max(1, parseInt(document.getElementById('n-input').value) || 5);
+  for (let i = 0; i < n; i++) walkStep();
+};
+
+document.getElementById('btn-auto').onclick = () => {
+  if (autoPlaying) stopAuto(); else startAuto();
+};
+
+document.getElementById('btn-reset').onclick = () => reset();
+
+// click on node → restart walk from that node
+network.on('click', params => {
+  if (params.nodes.length === 1) reset(params.nodes[0]);
+});
+
+// ── initialise ───────────────────────────────────────────────────────────────
+refreshColors();
+updateStats();
+</script>
+</body>
+</html>
