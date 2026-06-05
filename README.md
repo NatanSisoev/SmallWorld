@@ -54,6 +54,16 @@ SmallWorld/
 
 ## Setup
 
+Create a virtual environment:
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate     # on Windows
+source .venv/bin/activate  # on macOS/Linux
+```
+
+Then install and serve:
+
 ```bash
 make install      # installs dependencies from requirements.txt
 make docs-serve   # live-reloading docs at http://localhost:8000
