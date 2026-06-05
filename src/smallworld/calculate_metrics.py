@@ -1,4 +1,4 @@
-"""Hand-written implementations of the two Watts-Strogatz metrics.
+r"""Hand-written implementations of the two Watts-Strogatz metrics.
 
 This module computes, from scratch, the two structural quantities used
 throughout the project:

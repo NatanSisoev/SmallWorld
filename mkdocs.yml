@@ -1,6 +1,9 @@
 site_name: SmallWorld
 site_description: Watts-Strogatz small-world model - course project (MatCAD, UAB).
 site_author: Lluís Gay, Sergi Prats, Ferran Villarta, Natan Sisoev
+site_url: https://natansisoev.github.io/SmallWorld/
+repo_url: https://github.com/natansisoev/SmallWorld
+repo_name: natansisoev/SmallWorld
 
 docs_dir: docs
 site_dir: site
@@ -36,8 +39,14 @@ theme:
 nav:
   - Home: index.md
   - Theory: theory.md
-  - Real Network: real_network.md
-  - Explore: explore.md
+  - Explore:
+      - Networks: explore/networks.md
+      - Metric Analytics: explore/metrics.md
+      - Random Walk: explore/random_walk.md
+      - Cover & Mixing Time: explore/cover_time.md
+  - Case Study:
+      - Facebook Network: real_network.md
+      - Beyond the Model: beyond.md
   - API Reference:
       - Networks: api/networks.md
       - Metrics: api/metrics.md
@@ -80,6 +89,9 @@ markdown_extensions:
       anchor_linenums: true
   - pymdownx.inlinehilite
   - pymdownx.snippets
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
 extra_javascript:
   - javascripts/mathjax.js

@@ -416,7 +416,7 @@ def build_metrics_analytics_visualization(
     k_default: int = 10,
     seed: int = 42,
 ) -> str:
-    """Generate the self-contained HTML page for the *Metric analytics* section.
+    r"""Generate the self-contained HTML page for the *Metric analytics* section.
 
     Pre-computes $L(\beta)$ and $C(\beta)$ for the three
     reference networks across the requested ``(k, β)`` grid and embeds the

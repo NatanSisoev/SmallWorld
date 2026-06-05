@@ -17,8 +17,8 @@ random-graph length but $C$ is still close to the lattice value —
 sits around $\beta \in [10^{-2}, 10^{-1}]$.
 
 !!! example "Try it"
-    Drag, zoom, and hover each network interactively →
-    [Explore → The three networks](explore.md#the-three-networks)
+    - [Explore → Networks](explore/networks.md) — drag, zoom and hover each network
+    - [API → Networks](api/networks.md) — `build_ring`, `build_er`, `build_ws`
 
 ## The two metrics
 
@@ -50,6 +50,10 @@ $c_i = 2 \cdot e_i / [d_i(d_i - 1)]$ where $e_i$ is the number of
 edges among $i$'s neighbours — is computed separately for comparison.
 The original Watts–Strogatz paper uses average local.
 
+!!! example "Try it"
+    - [Explore → Metric analytics](explore/metrics.md) — sweep $\beta$ and track $L$ and $C$
+    - [API → Metrics](api/metrics.md) — `average_path_length`, `clustering_coefficient`
+
 ## The small-world window
 
 For $\beta \in \{10^{-3}, 5 \cdot 10^{-3}, 10^{-2}, 5 \cdot 10^{-2}, 10^{-1}, 0.5, 1\}$
@@ -65,10 +69,10 @@ few triangles locally — that's why the two collapse on different
 scales.
 
 !!! example "Try it"
-    Sweep $\beta$ and watch $L$ and $C$ evolve in real time →
-    [Explore → Side-by-side: effect of β](explore.md#side-by-side-effect-of-beta)
+    - [Explore → Metric analytics](explore/metrics.md) — $L$ and $C$ vs $\beta$ sweep
+    - [Explore → Side-by-side: effect of β](explore/cover_time.md#side-by-side-effect-of-beta) — compare all three networks in real time
 
-## Quantifying small-worldness: the σ coefficient
+## Quantifying small-worldness: the $\sigma$ coefficient
 
 Identifying the small-world window visually is intuitive, but comparing
 different real-world networks requires a single scalar. Humphries & Gurney
@@ -87,6 +91,10 @@ graph of the same size.
 In practice, $C_{\text{rand}} \approx k/N$ and $L_{\text{rand}} \approx \log N / \log k$,
 so $\sigma \gg 1$ for networks with tightly-knit local clusters connected by
 a few long-range shortcuts — exactly the Watts–Strogatz regime.
+
+!!! example "Try it"
+    - [Case Study → Facebook Network](real_network.md) — $\sigma \approx 39$ for a real social network
+    - [API → Real Network](api/real_network.md) — `smallworldness_sigma`
 
 ## Random walks
 
@@ -107,8 +115,8 @@ which reduces to the uniform distribution when every node has the same
 degree (exactly for the ring lattice, approximately for Watts–Strogatz).
 
 !!! example "Try it"
-    Watch a walker traverse all three networks step by step →
-    [Explore → Random walk](explore.md#random-walk)
+    - [Explore → Random walk](explore/random_walk.md) — watch a walker traverse all three networks
+    - [API → Simulation](api/simulation.md) — `random_walk`, `stationary_distribution`
 
 ### Characteristic times
 
@@ -132,9 +140,9 @@ dramatically smaller than the ring lattice. A handful of random
 shortcuts is enough to make diffusion fast.
 
 !!! example "Try it"
-    Run Monte-Carlo cover-time and mixing-time simulations →
-    [Explore → Cover time](explore.md#cover-time) ·
-    [Explore → Side-by-side: effect of β](explore.md#side-by-side-effect-of-beta)
+    - [Explore → Cover time](explore/cover_time.md#cover-time) — Monte-Carlo cover time distribution
+    - [Explore → Side-by-side: effect of β](explore/cover_time.md#side-by-side-effect-of-beta) — compare ring, WS, ER
+    - [API → Simulation](api/simulation.md) — `cover_time`, `mixing_time`
 
 ## References
 
