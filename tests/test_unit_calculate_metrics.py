@@ -38,7 +38,7 @@ def disconnected():
     return G
 
 
-# ------------ Average Path Length (camí_mig) ------------
+# ------------ Average Path Length ------------
 
 def test_average_path_length_return_type(ring: nx.Graph):
     assert isinstance(average_path_length(ring), float)
@@ -65,7 +65,7 @@ def test_average_path_length_non_negative(ring: nx.Graph):
     assert average_path_length(ring) >= 0.0
 
 
-# ------------ Nodes at Distance (nodes_within_distance) ------------
+# ------------ Nodes at Distance ------------
 
 def test_distance_one_returns_neighbours(ring: nx.Graph):
     """At distance 1 the function must return exactly the node's neighbours."""
@@ -94,7 +94,7 @@ def test_distance_two_ring_count(cycle6: nx.Graph):
     assert len(result) == 4
 
 
-# ------------ Clustering Coefficient (coef_clusterització) ------------
+# ------------ Clustering Coefficient ------------
 
 def test_clustering_coefficient_return_type(ring: nx.Graph):
     assert isinstance(clustering_coefficient(ring), float)

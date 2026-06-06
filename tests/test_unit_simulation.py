@@ -4,11 +4,12 @@ import pytest
 import networkx as nx
 import numpy as np
 
-from src.smallworld.networks import build_all
+from src.smallworld.networks import build_all, build_ring
 from src.smallworld.simulation import (
     random_walk_step,
     random_walk,
     build_transition_matrix,
+    stationary_distribution,
     mixing_time,
     cover_time,
 )
@@ -51,6 +52,32 @@ def test_k5_uniform_entries(k5):
                 assert P[i, j] == pytest.approx(0.0)
             else:
                 assert P[i, j] == pytest.approx(expected)
+
+
+# ------------ Stationary Distribution ------------
+
+def test_stationary_sums_to_one(ring: nx.Graph):
+    pi = stationary_distribution(ring)
+    assert pi.sum() == pytest.approx(1.0)
+
+def test_stationary_uniform_for_regular_graph():
+    """For a k-regular graph all degrees are equal, so pi is uniform = 1/N."""
+    G = build_ring(12, 4)
+    pi = stationary_distribution(G)
+    np.testing.assert_allclose(pi, 1 / 12, atol=1e-12)
+
+def test_stationary_degree_over_2m_for_irregular_graph():
+    """For an irregular graph pi_i = deg(i) / 2|E|. Path 0-1-2: degrees 1,2,1,
+    |E| = 2, so pi = [1/4, 1/2, 1/4]."""
+    G = nx.path_graph(3)
+    pi = stationary_distribution(G)
+    np.testing.assert_allclose(pi, [0.25, 0.5, 0.25], atol=1e-12)
+
+def test_stationary_matches_degree_formula(ring: nx.Graph):
+    """General check: pi_i == deg(i) / sum(degrees) for every node."""
+    pi = stationary_distribution(ring)
+    degrees = np.array([d for _, d in ring.degree()], dtype=float)
+    np.testing.assert_allclose(pi, degrees / degrees.sum(), atol=1e-12)
 
 
 # ------------ Random Walk Step ------------
