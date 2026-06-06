@@ -57,7 +57,7 @@ graph of the same size, yet its paths are only **40% longer**.
 It has strong local structure without sacrificing short paths —
 the hallmark of small-world networks.
 
-### Which Watts–Strogatz reproduces it? — $\beta \approx 0.05$
+### Which Watts–Strogatz reproduces it? — $\beta \approx 0.05$ { data-toc-label="Which Watts–Strogatz reproduces it? — β ≈ 0.05" }
 
 Searching for the $\text{WS}(N, k, \beta)$ model that best reproduces
 both metrics simultaneously, the best fit is $\beta^* \approx 0.052$: by
@@ -111,6 +111,6 @@ structures a real social network.
 > Advances in Neural Information Processing Systems (NIPS).
 
 !!! info "See also"
-    - [Theory → Quantifying small-worldness](theory.md#quantifying-small-worldness-the-σ-coefficient) — $\sigma$ definition
+    - [Theory → Quantifying small-worldness](theory.md#quantifying-small-worldness-the-sigma-coefficient) — $\sigma$ definition
     - [API → Real Network](api/real_network.md) — `smallworldness_sigma`, `plot_fitting_curve`
     - [Case Study → Beyond the Model](beyond.md) — what Watts–Strogatz doesn't capture

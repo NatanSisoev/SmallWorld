@@ -26,7 +26,7 @@ $\Theta(N \log N)$.
 
 ---
 
-## Side-by-side: effect of $\beta$
+## Side-by-side: effect of $\beta$ { data-toc-label="Side-by-side: effect of β" }
 
 This panel runs all three graphs simultaneously so you can compare
 cover time and mixing time directly. Use the $\beta$ slider to sweep

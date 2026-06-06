@@ -74,7 +74,7 @@ scales.
     - [Explore → Metric analytics](explore/metrics.md) — $L$ and $C$ vs $\beta$ sweep
     - [Explore → Side-by-side: effect of β](explore/cover_time.md#side-by-side-effect-of-beta) — compare all three networks in real time
 
-## Quantifying small-worldness: the $\sigma$ coefficient
+## Quantifying small-worldness: the $\sigma$ coefficient { data-toc-label="Quantifying small-worldness: the σ coefficient" }
 
 Identifying the small-world window visually is intuitive, but comparing
 different real-world networks requires a single scalar. Humphries & Gurney

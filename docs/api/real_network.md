@@ -5,7 +5,7 @@ small-worldness coefficient $\sigma$, $\beta$-fitting against Watts-Strogatz, an
 result visualisation.
 
 !!! info "See also"
-    - [Theory → Quantifying small-worldness](../theory.md#quantifying-small-worldness-the-σ-coefficient) — $\sigma$ definition
+    - [Theory → Quantifying small-worldness](../theory.md#quantifying-small-worldness-the-sigma-coefficient) — $\sigma$ definition
     - [Case Study → Facebook Network](../real_network.md) — full analysis
     - [Case Study → Beyond the Model](../beyond.md) — model limitations
 
