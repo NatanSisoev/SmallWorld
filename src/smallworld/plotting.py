@@ -257,8 +257,10 @@ def plot_cover_time(
     else:
         fig = ax.get_figure()
 
-    n_bins = max(1, len(np.unique(steps_arr)))
-    ax.hist(steps_arr, bins=n_bins, color="skyblue", edgecolor="black")
+    # Let numpy pick bin edges suited to (effectively continuous) cover-time
+    # data; tying the count to the number of distinct values would lump
+    # spread-out runs into a few bins and leave most empty.
+    ax.hist(steps_arr, bins="auto", color="skyblue", edgecolor="black")
     ax.set_xlabel("Number of steps")
     ax.set_ylabel("Frequency")
     title = f"Cover Time — {name_graph}" if name_graph else "Cover Time"
@@ -311,7 +313,10 @@ def plot_mixing_time_distribution(
     )
     ax.set_title(title, fontsize=14, fontweight="bold")
     ax.set_xticks(x)
-    ax.set_ylim(0, dist.max() * 1.15)
+    # Guard degenerate distributions (empty or all-zero) so the helper
+    # degrades gracefully instead of raising / warning on dist.max().
+    ymax = float(dist.max()) if dist.size else 0.0
+    ax.set_ylim(0, ymax * 1.15 if ymax > 0 else 1.0)
     ax.grid(axis="y", linestyle="--", alpha=0.4)
     fig.tight_layout()
     return fig

@@ -6,9 +6,9 @@ throughout the project:
 * `average_path_length` — average shortest-path length $L$.
 * `clustering_coefficient` — global clustering coefficient
   (transitivity) $C = 3 \cdot \#\text{triangles} / \#\text{paths of length 2}$.
-* `nodes_at_distance` — internal helper used by the
-  clustering routine; returns the multiset of nodes reachable in
-  exactly ``dist`` steps from a source node (counted with multiplicity).
+* `nodes_at_distance` — standalone helper that returns the multiset of
+  endpoints of length-``dist`` walks from a source node (counted with
+  multiplicity).
 """
 
 from collections import deque
@@ -82,12 +82,14 @@ def _bfs_distances(G: nx.Graph, source: int) -> dict[int, int]:
 
 
 def nodes_at_distance(G: nx.Graph, node: int, dist: int) -> list:
-    """Return all nodes reachable from ``node`` in exactly ``dist`` steps.
+    """Return the endpoints of all length-``dist`` *walks* from ``node``.
 
-    Walks expand one hop at a time, collecting neighbours **with
-    multiplicity** — a node visited along two different length-``dist``
-    walks therefore appears twice. This multiplicity is what
-    `clustering_coefficient` relies on to count length-2 paths.
+    Walk endpoints are collected **with multiplicity** and are **not**
+    filtered by shortest-path distance: each hop expands every current
+    endpoint to all of its neighbours, so for ``dist >= 2`` the result
+    may include ``node`` itself (a back-and-forth walk) and nodes closer
+    than ``dist``. This is a walk-expansion helper, not a true
+    graph-distance query.
 
     Parameters
     ----------
@@ -96,9 +98,9 @@ def nodes_at_distance(G: nx.Graph, node: int, dist: int) -> list:
     node : int
         Source node.
     dist : int
-        Number of hops to take. Pass ``1`` to get immediate neighbours
-        (identical to ``list(G.neighbors(node))``). Pass ``2`` to get
-        all length-2 walk endpoints (with multiplicity) for clustering.
+        Number of hops to take, ``>= 1``. Pass ``1`` to get immediate
+        neighbours (identical to ``list(G.neighbors(node))``). Pass ``2``
+        to get all length-2 walk endpoints (with multiplicity).
 
     Returns
     -------
@@ -106,17 +108,23 @@ def nodes_at_distance(G: nx.Graph, node: int, dist: int) -> list:
         Multiset of walk endpoints after exactly ``dist`` hops from
         ``node``. May contain duplicates and may contain ``node`` itself
         when ``dist >= 2``.
+
+    Raises
+    ------
+    ValueError
+        If ``dist < 1``.
     """
 
-    neighbors = list(G.neighbors(node))
-    i = 1
+    if dist < 1:
+        raise ValueError(f"dist must be >= 1, got {dist}")
 
-    while i < dist:
+    neighbors = list(G.neighbors(node))
+
+    for _ in range(dist - 1):
         new_neighbors = []
         for neighbor in neighbors:
             new_neighbors.extend(G.neighbors(neighbor))
         neighbors = new_neighbors
-        i += 1
 
     return neighbors
 
