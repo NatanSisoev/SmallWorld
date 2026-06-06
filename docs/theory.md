@@ -44,11 +44,13 @@ $$
 C = \frac{3 \cdot \#\text{triangles}}{\#\text{paths of length } 2}
 $$
 
-This is the *global* (or transitivity) definition. The *average
-local* version — average over nodes of
+This is the *global* (or transitivity) definition, implemented by
+`clustering_coefficient` and used for the small-world window. The
+*average local* version — average over nodes of
 $c_i = 2 \cdot e_i / [d_i(d_i - 1)]$ where $e_i$ is the number of
-edges among $i$'s neighbours — is computed separately for comparison.
-The original Watts–Strogatz paper uses average local.
+edges among $i$'s neighbours — is the definition used in the original
+Watts–Strogatz paper; the real-network case study adopts it (via
+`nx.average_clustering`) when computing the $\sigma$ coefficient below.
 
 !!! example "Try it"
     - [Explore → Metric analytics](explore/metrics.md) — sweep $\beta$ and track $L$ and $C$
@@ -101,8 +103,14 @@ a few long-range shortcuts — exactly the Watts–Strogatz regime.
 The simple random walk on $G$ is a Markov chain with transition matrix
 
 $$
-P_{ij} = \begin{cases} 1 / d_i & \text{if } (i, j) \in E \\ 0 & \text{otherwise.}\end{cases}
+P_{ij} = \begin{cases} 1 / d_j & \text{if } (i, j) \in E \\ 0 & \text{otherwise.}\end{cases}
 $$
+
+Here column $j$ is the current node, so $P_{ij}$ is the probability of
+moving **from** $j$ **to** $i$. With this convention $P$ is
+*column-stochastic* and the distribution evolves as
+$\mathbf{p}_{t+1} = P\,\mathbf{p}_t$ — exactly as implemented in
+`build_transition_matrix`.
 
 On a connected, non-bipartite graph the unique stationary distribution
 is
