@@ -1313,11 +1313,13 @@ connected component when needed.</p>
 <div class="arithmatex">\[
 C = \frac{3 \cdot \#\text{triangles}}{\#\text{paths of length } 2}
 \]</div>
-<p>This is the <em>global</em> (or transitivity) definition. The <em>average
-local</em> version — average over nodes of
+<p>This is the <em>global</em> (or transitivity) definition, implemented by
+<code>clustering_coefficient</code> and used for the small-world window. The
+<em>average local</em> version — average over nodes of
 <span class="arithmatex">\(c_i = 2 \cdot e_i / [d_i(d_i - 1)]\)</span> where <span class="arithmatex">\(e_i\)</span> is the number of
-edges among <span class="arithmatex">\(i\)</span>'s neighbours — is computed separately for comparison.
-The original Watts–Strogatz paper uses average local.</p>
+edges among <span class="arithmatex">\(i\)</span>'s neighbours — is the definition used in the original
+Watts–Strogatz paper; the real-network case study adopts it (via
+<code>nx.average_clustering</code>) when computing the <span class="arithmatex">\(\sigma\)</span> coefficient below.</p>
 <div class="admonition example">
 <p class="admonition-title">Try it</p>
 <ul>
@@ -1369,8 +1371,13 @@ a few long-range shortcuts — exactly the Watts–Strogatz regime.</p>
 <h2 id="random-walks">Random walks<a class="headerlink" href="#random-walks" title="Permanent link">&para;</a></h2>
 <p>The simple random walk on <span class="arithmatex">\(G\)</span> is a Markov chain with transition matrix</p>
 <div class="arithmatex">\[
-P_{ij} = \begin{cases} 1 / d_i &amp; \text{if } (i, j) \in E \\ 0 &amp; \text{otherwise.}\end{cases}
+P_{ij} = \begin{cases} 1 / d_j &amp; \text{if } (i, j) \in E \\ 0 &amp; \text{otherwise.}\end{cases}
 \]</div>
+<p>Here column <span class="arithmatex">\(j\)</span> is the current node, so <span class="arithmatex">\(P_{ij}\)</span> is the probability of
+moving <strong>from</strong> <span class="arithmatex">\(j\)</span> <strong>to</strong> <span class="arithmatex">\(i\)</span>. With this convention <span class="arithmatex">\(P\)</span> is
+<em>column-stochastic</em> and the distribution evolves as
+<span class="arithmatex">\(\mathbf{p}_{t+1} = P\,\mathbf{p}_t\)</span> — exactly as implemented in
+<code>build_transition_matrix</code>.</p>
 <p>On a connected, non-bipartite graph the unique stationary distribution
 is</p>
 <div class="arithmatex">\[
